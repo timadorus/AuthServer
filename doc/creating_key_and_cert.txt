@@ -1,0 +1,12 @@
+
+keytool -genkey -alias timadorus-auth-server -keyalg RSA -keystore server
+
+The password of the trustfile and the cert: 123456
+
+# export self-signed cert
+
+keytool -export -alias timadorus-auth-server -keystore server -rfc -file authServer.cer
+
+# import cert into truststore
+keytool -import -alias ca -file authServer.cer -keystore cacerts -storepass secret
+

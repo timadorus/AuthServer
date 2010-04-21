@@ -1,0 +1,252 @@
+<?xml version="1.0"?>
+
+<project name="TimadorusAuthServer" default="build" basedir=".">
+
+	<property name="release.version" value="0.1.0"/>
+	
+	<property name="build.dir" value="${basedir}/bin"/>
+	<property name="src.dir" value="${basedir}/src"/>
+	<property name="src.resources" value="${basedir}/resources"/>
+
+	<property name="build.lib" value="${build.dir}/lib"/>
+	<property name="build.resources" value="${build.dir}/resources"/>
+	<property name="build.sources" value="${build.dir}/build_src"/>
+	<property name="tool.dir" value="${basedir}/lib"/>
+
+	<property name="instrumented.bindir" value="${basedir}/instrumented.bin"/>        
+	<property name="coverage.dir" value="${basedir}/coverage"/>        
+	<property name="test-report.dir" value="${basedir}/test-results"/>
+		
+	<property name="doc.dir" value="${basedir}/doc"/>
+	<property name="doc.apidoc.dir" value="${doc.dir}/apidoc"/>
+	
+	<!-- Classpath definiton -->
+	<path id="tools.classpath">
+		<pathelement path="${java.class.path}/" />
+		<fileset dir="${tool.dir}">
+			<include name="**/*.jar"/>
+			<include name="**/*.zip"/>
+		</fileset>
+	</path>
+
+	<path id="project.classpath">
+		<path refid="tools.classpath"/>
+		<fileset dir="${build.dir}">
+			<include name="**/*.jar"/>
+			<include name="**/*.zip"/>
+		</fileset>
+		<pathelement path="${build.dir}"/>
+	</path>
+
+
+	<patternset id="meta.files">
+		<include name="**/*.xml"/>
+		<include name="**/*.properties"/>
+		<include name="**/*.txt"/>		
+		<include name="**/*.list"/>
+	</patternset>
+
+	<!-- load the cobertura task definition --> 
+	<taskdef classpathref="tools.classpath" resource="tasks.properties"/>
+
+    <!-- ================================= 
+          target: prep-dirs             
+         ================================= -->
+    <target name="prep-dirs" description="--> set directories, basic files, etc.">
+        <mkdir dir="${build.dir}"/>
+    	<mkdir dir="${instrumented.bindir}"/>
+		<mkdir dir="${test-report.dir}"/>
+    	<mkdir dir="${coverage.dir}"/>
+    </target>
+
+	<!-- ================================= 
+          target: compile              
+         ================================= -->
+	<target name="compile" depends="prep-dirs">
+		<javac srcdir="${src.dir}"
+         destdir="${build.dir}"
+         debug="on">
+			<classpath refid="project.classpath"/>
+		</javac>
+	</target>
+
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: tas-server.jar          
+         - - - - - - - - - - - - - - - - - -->
+    <target name="tas-server.jar" depends="compile">
+    	<copy todir="${build.dir}/META-INF">
+	    	<fileset dir="${basedir}/META-INF"/>
+    	</copy>
+    	<jar destfile="${basedir}/tas-server-${release.version}.jar"
+    				  basedir="${build.dir}" >
+    		<include name="org/timadorus/auth/*.class"/>
+    		<include name="org/timadorus/auth/server/*.class"/>
+    		<include name="META-INF/**/*"/>
+    	</jar>
+    </target>
+
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: tas-client.jar          
+         - - - - - - - - - - - - - - - - - -->
+    <target name="tas-client.jar" depends="compile">
+    	<copy todir="${build.dir}/META-INF">
+	    	<fileset dir="${basedir}/META-INF"/>
+    	</copy>
+    	<jar destfile="${basedir}/tas-client-${release.version}.jar"
+    				  basedir="${build.dir}" >
+    		<include name="org/timadorus/auth/client/*.class"/>
+    		<include name="META-INF/**/*"/>
+    	</jar>
+    </target>
+
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: tas-sgs-authenticator.jar          
+         - - - - - - - - - - - - - - - - - -->
+    <target name="tas-sgs-authenticator.jar" depends="compile">
+    	<copy todir="${build.dir}/META-INF">
+	    	<fileset dir="${basedir}/META-INF"/>
+    	</copy>
+    	<jar destfile="${basedir}/tas-sgs-authenticator-${release.version}.jar"
+    				  basedir="${build.dir}" >
+    		<include name="org/timadorus/auth/sgs/*.class"/>
+    		<include name="META-INF/**/*"/>
+    	</jar>
+    </target>
+
+
+	<!-- ================================= 
+          target: deployment-jar              
+         ================================= -->
+    <target name="deployment-jar" depends="compile" description="build a jar, deployabel in RDS">
+    	<copy todir="${build.dir}/META-INF">
+    	    <fileset dir="${basedir}/META-INF"/>
+    	  </copy>
+    	<jar destfile="${basedir}/cornerstone.jar"
+    				  basedir="${build.dir}" >
+    		<include name="org/timadorus/cornerstone/**/*.class"/>
+    		<include name="META-INF/**/*"/>
+    	</jar>
+    </target>
+
+	<target name="jar-of-all" depends="compile">
+		<mkdir dir="${build.lib}"/>
+		<jar destfile="${build.lib}/keeper_classes.jar"
+					  basedir="${build.dir}" >
+					<include name="de/harper_hall/keeper/**/*"/>
+				</jar>
+	</target>
+	
+	<!-- ================================= 
+          target: instrument java              
+         ================================= -->
+	<target name="instrument_java">
+		<cobertura-instrument todir="${instrumented.bindir}" datafile="${basedir}/cobertura.ser">
+		    <fileset dir="${build.dir}">
+		        <include name="**/*.class"/>
+		    	<exclude name="**/*$?.class"/>
+		    </fileset>
+		</cobertura-instrument>
+	</target>
+
+	<!-- ================================= 
+          target: test_java              
+         ================================= -->
+	<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
+			<classpath>
+				<path refid="tools.classpath"/>
+				<pathelement location="${tool.dir}/junit-3.8.2.jar"/>
+				<pathelement  location="${tool.dir}/ant-junit.jar"/>
+            </classpath>
+    </taskdef>
+	
+	<target name="test_java" depends="prep-dirs,compile,test-setup,instrument_java" description="run all tests">
+		<junit fork="yes">
+			<sysproperty key="net.sourceforge.cobertura.datafile" value="${basedir}/cobertura.ser" />
+			<classpath>
+				<path refid="tools.classpath"/>
+				<pathelement path="${instrumented.bindir}"/>
+				<pathelement path="${build.dir}"/>
+			</classpath>
+			<formatter type="xml"/>
+			<test name="org.timadorus.cornerstone.CornerstoneSmokeTest"
+				todir="${test-report.dir}"/>
+		</junit>
+		<cobertura-report srcdir="${src.dir}" destdir="${test-report.dir}"/>
+	</target>
+
+	<!-- ================================= 
+          target: test-setup              
+         ================================= -->
+    <target name="test-setup" depends="" description="copies all needed file into the directory ${build.dir}/resources to prepare for the tests to find it">
+		<mkdir dir="${build.resources}"/>
+		<copy todir="${build.resources}">
+		    <fileset dir="${src.dir}">
+		    	<patternset refid="meta.files"/>
+		    </fileset>
+		</copy>    	
+    	
+    </target>
+
+	<!-- ================================= 
+          target: test-checkstyle              
+         ================================= -->
+	<taskdef resource="checkstyletask.properties"
+	         classpath="${tool.dir}/checkstyle-all-5.0.jar"/>
+
+		
+    <target name="test-checkstyle" depends="test-setup" 
+    	description="--> check the style of the source code and run some static quality checks on the code.">
+    	<sequential>
+			<mkdir dir="${basedir}/test-results"/>
+            <checkstyle config="${basedir}/checkstyle.xml" failOnViolation="true">
+				<formatter type="plain" />
+    	        <formatter type="xml" toFile="${basedir}/test-results/checkstyle-log.xml" />
+    	        <fileset dir="${src.dir}" includes="**/*.java" />
+    	        <property key="checkstyle.cache.file" file="${build.dir}/checkstyle-cache" />
+    	    </checkstyle>
+    	</sequential>
+    </target>
+
+	<!-- ================================= 
+          target: clean              
+         ================================= -->
+	<target name="clean" description="delete all derived objects">
+		<delete dir="${build.dir}/org" includeemptydirs="true" />
+		<delete dir="${build.dir}/lib"  includeemptydirs="true" />
+		<delete dir="${build.dir}/resources"  includeemptydirs="true" />
+		<delete dir="${instrumented.bindir}"/>
+		<delete file="${basedir}/cobertura.ser"/>
+		<delete verbose="true">
+			<fileset dir="${build.dir}/" >
+				<include name="*.ear"/>
+				<include name="*.war"/>
+				<include name="*.sar"/>
+			</fileset>
+		</delete>
+	</target>
+	
+	<!-- ================================= 
+          target: javadoc              
+         ================================= -->
+    <target name="javadoc" depends="compile" description="--> generate the javadoc documentation files">
+        <javadoc destdir="${doc.apidoc.dir}" windowTitle="Cornerstone"
+		   		author="true" version="true" use="true">
+			<classpath refid="project.classpath"/>
+        	<packageset dir="${src.dir}" defaultexcludes="yes">
+        	      <include name="org/timadorus/cornerstone/**"/>
+        	      <exclude name="org/timadorus/cornerstone/**/test/**"/>
+        	    </packageset>
+        	<doctitle><![CDATA[<h1>BookKeeper</h1>]]></doctitle>
+        	<bottom><![CDATA[<i>Copyright &#169; 2007-2009 Lutz Behnke. All Rights Reserved.</i>]]></bottom>
+        </javadoc>
+    </target>
+
+
+	<target name="distjar"  description="Create a jar for the cornerstone project" depends="compile">
+	        <jar jarfile="cornerstone.jar" includes="**/*.class" excludes="**/*Test.class" basedir="${build.dir}">
+	        </jar>
+	    </target>
+
+	<target name="build" depends="test-checkstyle, test_java, distjar">
+	</target>
+</project>
