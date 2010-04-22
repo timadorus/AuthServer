@@ -47,13 +47,13 @@ public class BasicPasswordAuthenticator implements IdentityAuthenticator {
    */
   @Override
   public Principal authenticateIdentity(IdentityCredentials credentials) throws LoginException {
-    if(! (credentials instanceof BasicUserPasswordCredential) ) { 
+    if (!(credentials instanceof BasicUserPasswordCredential)) { 
       throw new LoginException("invalid credential"); 
     }
     BasicUserPasswordCredential creds = (BasicUserPasswordCredential) credentials;
     
     String pw = pwCombos.get(creds.getUsername());
-    if((pw == null) || (! pw.equals(creds.getPassword()))) { 
+    if ((pw == null) || (!pw.equals(creds.getPassword()))) { 
       throw new LoginException("unknown username/password"); 
     } 
     

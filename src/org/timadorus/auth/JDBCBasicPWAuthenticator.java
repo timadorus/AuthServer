@@ -39,7 +39,7 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
   // driver to use
   private String driver = "org.apache.derby.jdbc.EmbeddedDriver";
   // the database name
-  private String dbName="jdbcDemoDB";
+  private String dbName = "jdbcDemoDB";
   // Derby connection URL to use
   private String connectionURL = "jdbc:derby:" + dbName + ";create=true";
 
@@ -51,7 +51,7 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
   private PreparedStatement psGetEntities;
   
   protected Connection getDbConn() {
-    if(dbConn == null) { initDB(); }
+    if (dbConn == null) { initDB(); }
     
     // TODO: check for tables;
     
@@ -110,7 +110,7 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
 
     try {
       Class.forName(driver);
-    } catch(java.lang.ClassNotFoundException e)     {
+    } catch (java.lang.ClassNotFoundException e)     {
       System.err.println("ClassNotFoundException: " + e.getMessage());
       return;
     }
@@ -152,7 +152,7 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
       try {
         DriverManager.getConnection("jdbc:derby:;shutdown=true");
       } catch (SQLException se)  {
-        if ( se.getSQLState().equals("XJ015") ) {
+        if (se.getSQLState().equals("XJ015")) {
           gotSQLExc = true;
         }
       }
@@ -173,7 +173,7 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
     
     
     try {
-      if ( psGetUser == null || psGetEntities == null) { prepareStatements(); }
+      if (psGetUser == null || psGetEntities == null) { prepareStatements(); }
 
       psGetUser.setString(1, username);
       userSet = psGetUser.executeQuery();
@@ -189,7 +189,7 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
        **       the exception reporting method             */
       System.out.println(" . . . exception thrown:");
       errorPrint(e);
-      throw new LoginException("providing login information failed:"+e.getMessage());
+      throw new LoginException("providing login information failed:" + e.getMessage());
     }
     
     return retval;
@@ -200,16 +200,16 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
    **      with special handling of SQLExceptions
    ***/
    void errorPrint(Throwable e) {
-    if (e instanceof SQLException)
-      SQLExceptionPrint((SQLException)e);
-    else {
+    if (e instanceof SQLException) {
+      sqlExceptionPrint((SQLException) e);
+    } else {
       System.out.println("A non SQL error occured.");
       e.printStackTrace();
     }
   }  // END errorPrint
 
   //  Iterates through a stack of SQLExceptions
-   void SQLExceptionPrint(SQLException sqle) {
+   void sqlExceptionPrint(SQLException sqle) {
     while (sqle != null) {
       System.out.println("\n---SQLException Caught---\n");
       System.out.println("SQLState:   " + (sqle).getSQLState());
@@ -230,12 +230,12 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
    */
   @Override
   public Principal authenticateIdentity(IdentityCredentials credentials) throws LoginException {
-    if(! (credentials instanceof BasicUserPasswordCredential) ) { 
+    if (!(credentials instanceof BasicUserPasswordCredential)) { 
       throw new LoginException("invalid credential"); 
     }
     BasicUserPasswordCredential creds = (BasicUserPasswordCredential) credentials;
 
-    if (! doJDBC(creds.getUsername(),creds.getPassword())) { 
+    if (!doJDBC(creds.getUsername(), creds.getPassword())) { 
        throw new LoginException("unknown username/password"); 
     } 
 

@@ -44,8 +44,7 @@ import javax.security.auth.login.LoginException;
  * auth server.
  * 
  */
-public interface IdentityAuthenticator
-{
+public interface IdentityAuthenticator {
 
     /**
      * Authenticates the given credentials. The returned <code>Identity</code>

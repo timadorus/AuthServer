@@ -29,28 +29,26 @@ import java.util.Date;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.timadorus.auth.Base64;
 
-
-import com.sun.sgs.impl.auth.IdentityImpl;
-
 /**
  * @author sage
  *
  */
-public class CryptoTrial {
+public final class CryptoTrial {
 
+  private CryptoTrial () { }
+  
   static String keyData = "foobarsecret1234";  // needs to be 128/8: 16 Bytes long
 
   public static void main(String[] args) throws IOException {
     String transmission = encrypt(keyData);
     // String transmission = "FbL19iuXFhq/ay9k5Co+TbM2PKD2drpXPrp/6uzUQf8aIigP83kq43q4semu6lBO";
-    System.out.println("Transmission: "+transmission);
-    decrypt(keyData,transmission);
+    System.out.println("Transmission: " + transmission);
+    decrypt(keyData, transmission);
   }
 
   /**
@@ -59,7 +57,9 @@ public class CryptoTrial {
    * @param transmission
    * @throws IOException of the transmission contains invalid characters, i.e. not decodable base64 values 
    */
-  public static void decrypt(String keyStr,String transmission) throws IOException {
+  public static void decrypt(String keyStr, String transmission) throws IOException {
+    
+    final int charsForTime = 13;
     
     byte[] data = null;
         data = Base64.decode(transmission);
@@ -69,7 +69,7 @@ public class CryptoTrial {
     byte[] aesKeyData = keyStr.getBytes();
 
     try {
-      SecretKeySpec keySpec = new SecretKeySpec(aesKeyData,"AES");      
+      SecretKeySpec keySpec = new SecretKeySpec(aesKeyData, "AES");      
       
       Cipher cipher = Cipher.getInstance("AES");      
       cipher.init(Cipher.DECRYPT_MODE, keySpec);
@@ -92,26 +92,26 @@ public class CryptoTrial {
       e.printStackTrace();
     } 
 
-    System.out.println("decrypted string: '"+Arrays.toString(original)+"'");
+    System.out.println("decrypted string: '" + Arrays.toString(original) + "'");
 
     String tokenStr = new String(original);
     
-    System.out.println("readable: "+tokenStr);
+    System.out.println("readable: " + tokenStr);
     
-    Long tokenDate = Long.decode(tokenStr.substring(0, 13));
+    Long tokenDate = Long.decode(tokenStr.substring(0, charsForTime));
     
-    long t_delta = new Date().getTime() - tokenDate;
+    long timeDelta = new Date().getTime() - tokenDate;
     
-    System.out.println("t_delta: "+t_delta);
-    String tokenName = tokenStr.substring(13);
-    System.out.println("Name: "+tokenName);
+    System.out.println("t_delta: " + timeDelta);
+    String tokenName = tokenStr.substring(charsForTime);
+    System.out.println("Name: " + tokenName);
   }
 
  
   
   public static String encrypt(String keyStr) {
     
-    String identifier ="Boromir";
+    String identifier = "Boromir";
     Charset charset = Charset.forName("latin1");
     
     byte[] timeBytes = Long.toString(new Date().getTime()).getBytes(charset);
@@ -121,17 +121,17 @@ public class CryptoTrial {
     System.arraycopy(timeBytes, 0, input, 0, timeBytes.length);
     System.arraycopy(ident, 0, input, timeBytes.length, ident.length);
 
-    System.out.println("orig string: '"+Arrays.toString(input)+"'");
+    System.out.println("orig string: '" + Arrays.toString(input) + "'");
 
     byte[] retval = null;
     
     byte[] aesKeyData = keyStr.getBytes();
 
     try {
-      KeyGenerator kgen = KeyGenerator.getInstance("AES");
-      kgen.init(128); // 192 and 256 bits may not be available
+      // KeyGenerator kgen = KeyGenerator.getInstance("AES");
+      // kgen.init(128); // 192 and 256 bits may not be available
 
-      SecretKeySpec keySpec = new SecretKeySpec(aesKeyData,"AES");      
+      SecretKeySpec keySpec = new SecretKeySpec(aesKeyData, "AES");      
 
       Cipher cipher = Cipher.getInstance("AES");      
       cipher.init(Cipher.ENCRYPT_MODE, keySpec);

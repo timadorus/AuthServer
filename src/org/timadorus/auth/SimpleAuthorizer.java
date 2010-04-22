@@ -48,6 +48,10 @@ import com.sun.jersey.core.util.Base64;
  */
 public class SimpleAuthorizer implements SubjectAuthorizer {
 
+  /** default length of AES keys in bits
+   * 
+   */
+  protected static final int DEFAULT_KEY_LENGTH = 128;
  
   /**
    * @author sage
@@ -105,8 +109,8 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
      */
     @Override
     public boolean equals(Object obj) {
-      if(!(obj instanceof SimpleEntity)) { return false; }
-      SimpleEntity se = (SimpleEntity)obj;
+      if (!(obj instanceof SimpleEntity)) { return false; }
+      SimpleEntity se = (SimpleEntity) obj;
       
       return (name == null) ? se.name == null : name.equals(se.name);
       
@@ -143,8 +147,10 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
    * 
    */
   public void setSharedSecret(String data) {
-    if (data.length() != 16) {
-      throw new InvalidParameterException("Key lenght must be 16");
+    final int bitsPerByte = 8;
+    
+    if (data.length() != (DEFAULT_KEY_LENGTH / bitsPerByte)) {
+      throw new InvalidParameterException("Key lenght must be " + (DEFAULT_KEY_LENGTH / bitsPerByte) + " bytes");
     }
     keyData = data.getBytes();
   }
@@ -171,7 +177,7 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
     System.arraycopy(timeBytes, 0, input, 0, timeBytes.length);
     System.arraycopy(ident, 0, input, timeBytes.length, ident.length);
 
-    System.out.println("orig string: '"+Arrays.toString(input)+"'");
+    System.out.println("orig string: '" + Arrays.toString(input) + "'");
 
     byte[] retval = null;
     
@@ -179,9 +185,9 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
     
     try {
       KeyGenerator kgen = KeyGenerator.getInstance("AES");
-      kgen.init(128); // 192 and 256 bits may not be available
+      kgen.init(DEFAULT_KEY_LENGTH); // 192 and 256 bits may not be available
 
-      SecretKeySpec keySpec = new SecretKeySpec(keyData,"AES");      
+      SecretKeySpec keySpec = new SecretKeySpec(keyData, "AES");      
 
       Cipher cipher = Cipher.getInstance("AES");      
       cipher.init(Cipher.ENCRYPT_MODE, keySpec);
@@ -231,11 +237,11 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
     if (candidate == null) { return new ArrayList<Entity>(); }
 
     List<Entity> retlist = new ArrayList<Entity>();
-    if(parent == null) { parent = treeRoot; } // handle for root of entities
+    if (parent == null) { parent = treeRoot; } // handle for root of entities
     
     // filter for parent
-    for(SimpleEntity entity: candidate) {
-      if(entity.parent.equals(parent)) {
+    for (SimpleEntity entity : candidate) {
+      if (entity.parent.equals(parent)) {
         retlist.add(entity);
       }
     }
@@ -254,11 +260,11 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
    */
   @Override
   public Entity getEntityByIdentifier(String identPath) throws IllegalArgumentException {
-    if( identPath == null) { return null; }
+    if (identPath == null) { return null; }
     
     SimpleEntity parent = treeRoot;
     String[] idents = identPath.split(":");
-    for(String ident: idents) {
+    for (String ident : idents) {
       
       parent = new SimpleEntity(ident, parent);
     }
@@ -272,7 +278,7 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
   public void addEntity(Principal princ, SimpleEntity entity) throws IllegalArgumentException {
         
     List<SimpleEntity> entList = entitiesPerPrincipal.get(princ);
-    if( entList == null) { 
+    if (entList == null) { 
       entList = new ArrayList<SimpleEntity>(); 
       entitiesPerPrincipal.put(princ, entList);
     }    
@@ -288,7 +294,7 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
    * @param parent
    */
   public SimpleEntity createEntity(String name, SimpleEntity parent) {
-    if(parent == null) { parent = treeRoot; }
+    if (parent == null) { parent = treeRoot; }
     SimpleEntity retval = new SimpleEntity(name, parent);
     
     return retval;

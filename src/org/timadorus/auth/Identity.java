@@ -56,10 +56,10 @@ public class Identity implements Principal {
    */
   @Override
   public boolean equals(Object obj) {
-    if(! (obj instanceof Identity)) { return false; }
-    Identity id = (Identity)obj;
+    if (!(obj instanceof Identity)) { return false; }
+    Identity id = (Identity) obj;
     
-    return ( getName() == null) ? (id.getName() == null) : getName().equals(id.getName()) ;
+    return (getName() == null) ? (id.getName() == null) : getName().equals(id.getName());
   }
 
   /**

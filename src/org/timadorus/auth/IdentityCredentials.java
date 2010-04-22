@@ -34,8 +34,7 @@ package org.timadorus.auth;
  * auth server.
  * 
 */
-public interface IdentityCredentials
-{
+public interface IdentityCredentials {
 
     /**
      * Returns the identifier for the type of credentials. This will be

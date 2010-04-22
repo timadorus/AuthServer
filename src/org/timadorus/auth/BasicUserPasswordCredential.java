@@ -19,8 +19,6 @@
 
 package org.timadorus.auth;
 
-import java.io.IOException;
-
 import javax.security.auth.login.LoginException;
 
 import com.sun.jersey.core.util.Base64;
@@ -41,7 +39,7 @@ public class BasicUserPasswordCredential implements IdentityCredentials {
     
       authText = Base64.base64Decode(credData);
     String[] elems = authText.split(":");    
-    if(elems.length != 2) { 
+    if (elems.length != 2) { 
       throw new LoginException("http basic credentials not valid");
     }
     

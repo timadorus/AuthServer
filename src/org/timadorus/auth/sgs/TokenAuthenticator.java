@@ -27,7 +27,6 @@ import java.util.Date;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.login.CredentialException;
@@ -47,10 +46,12 @@ import com.sun.sgs.impl.auth.NamePasswordCredentials;
  */
 public class TokenAuthenticator implements IdentityAuthenticator {
 
+  static final int DEFAULT_GRACE = 60;
+  
   private byte[] keyData = null;
   
   // number of seconds that a token is valid
-  private int grace = 60;
+  private int grace = DEFAULT_GRACE;
   
   /**
    * 
@@ -81,6 +82,9 @@ public class TokenAuthenticator implements IdentityAuthenticator {
   @Override
   public Identity authenticateIdentity(IdentityCredentials credentials) throws LoginException {
     
+    final int charsForTime = 13;
+    final int kiloMult = 1000;
+    
  // make sure that we were given the right type of credentials
     if (!(credentials instanceof NamePasswordCredentials)) {
         throw new CredentialException("unsupported credentials");
@@ -102,10 +106,15 @@ public class TokenAuthenticator implements IdentityAuthenticator {
     }
 
     try {
-      KeyGenerator kgen = KeyGenerator.getInstance("AES");
-      kgen.init(128); // 192 and 256 bits may not be available
+      // TODO: work out how what key lengths are acceptable by the crypto provider and
+      // add some methods to give that info to the user of the class, to help in generating
+      // key data
+      
+      // final int aesKeyLength = 128;      
+      // KeyGenerator kgen = KeyGenerator.getInstance("AES");
+      // kgen.init(aesKeyLength); // 192 and 256 bits may not be available
 
-      SecretKeySpec keySpec = new SecretKeySpec(keyData,"AES");      
+      SecretKeySpec keySpec = new SecretKeySpec(keyData, "AES");      
 
       Cipher cipher = Cipher.getInstance("AES");      
       cipher.init(Cipher.DECRYPT_MODE, keySpec);
@@ -113,32 +122,32 @@ public class TokenAuthenticator implements IdentityAuthenticator {
       retval = cipher.doFinal(input);
             
     } catch (NoSuchAlgorithmException e) {
-      throw new LoginException("invalid crypto configuration. Call the admin ('"+e.getMessage()+"')");
+      throw new LoginException("invalid crypto configuration. Call the admin ('" + e.getMessage() + "')");
     } catch (NoSuchPaddingException e) {
-      throw new LoginException("invalid crypto configuration. Call the admin ('"+e.getMessage()+"')");
+      throw new LoginException("invalid crypto configuration. Call the admin ('" + e.getMessage() + "')");
     } catch (InvalidKeyException e) {
-      throw new LoginException("invalid crypto configuration. Call the admin ('"+e.getMessage()+"')");
+      throw new LoginException("invalid crypto configuration. Call the admin ('" + e.getMessage() + "')");
     } catch (IllegalBlockSizeException e) {
-      throw new LoginException("invalid crypto configuration. Call the admin ('"+e.getMessage()+"')");
+      throw new LoginException("invalid crypto configuration. Call the admin ('" + e.getMessage() + "')");
     } catch (BadPaddingException e) {
-      throw new LoginException("invalid crypto configuration. Call the admin ('"+e.getMessage()+"')");
+      throw new LoginException("invalid crypto configuration. Call the admin ('" + e.getMessage() + "')");
     } 
 
     String tokenStr = new String(retval);
     
-    Long tokenDate = Long.decode(tokenStr.substring(0, 13));
+    Long tokenDate = Long.decode(tokenStr.substring(0, charsForTime));
 
     long tDelta = new Date().getTime() - tokenDate;
 
     // check age of token
-    if (tDelta > (grace*1000)) {
+    if (tDelta > (grace * kiloMult)) {
       throw new LoginException("token to old");
     }
     if (tDelta < 0) {
       throw new LoginException("token timestamp lies in the future");
     }
     
-    String tokenName = tokenStr.substring(13);
+    String tokenName = tokenStr.substring(charsForTime);
     
     if (!tokenName.equals(name)) {
       throw new LoginException("name in token does not match name supplied by client");

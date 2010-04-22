@@ -57,7 +57,7 @@ public class AuthManager {
    * @return
    */
   protected static AuthManager getInstance() {
-    if(instance == null) { instance = new AuthManager(); }
+    if (instance == null) { instance = new AuthManager(); }
     
     return instance;
   }
@@ -69,14 +69,14 @@ public class AuthManager {
   }
   
   public static void addAuthenticator(AuthType type, IdentityAuthenticator auth) {
-    getInstance()._addAuthenticator(type, auth);
+    getInstance().objAddAuthenticator(type, auth);
   }
   
-  protected void _addAuthenticator(AuthType type, IdentityAuthenticator auth) {
+  protected void objAddAuthenticator(AuthType type, IdentityAuthenticator auth) {
     List<IdentityAuthenticator> currList = authenticatorList.get(type);
     if (currList == null) { 
       currList = new ArrayList<IdentityAuthenticator>(); 
-      authenticatorList.put(type,currList);
+      authenticatorList.put(type, currList);
     }
     
     currList.add(auth);
@@ -93,9 +93,9 @@ public class AuthManager {
     switch (type) {
     case Basic:
       return getInstance().authenticateBasic(credData);
+    default:
+      return null;
     }
-    
-    return null;
     
   }
 
@@ -111,9 +111,9 @@ public class AuthManager {
     
     List<IdentityAuthenticator> baseAuthList = authenticatorList.get(AuthType.Basic);
     
-    if(baseAuthList == null) { return null; }
+    if (baseAuthList == null) { return null; }
     
-    for(IdentityAuthenticator auth: baseAuthList) {
+    for (IdentityAuthenticator auth : baseAuthList) {
       Principal retval;
       try {
         retval = auth.authenticateIdentity(cred);
@@ -121,7 +121,7 @@ public class AuthManager {
         // TODO: logging warn
         return null;
       }
-      if(retval != null) { return retval; }
+      if (retval != null) { return retval; }
     }
     
     return null;
@@ -132,39 +132,39 @@ public class AuthManager {
    * @param authorizer
    */
   public static void addAuthorizer(SimpleAuthorizer authorizer) {
-    getInstance()._addAuthorizer(authorizer);
+    getInstance().objAddAuthorizer(authorizer);
   }
 
   /**
    * 
    * @param authorizer
    */
-  protected void _addAuthorizer(SimpleAuthorizer authorizer) {        
+  protected void objAddAuthorizer(SimpleAuthorizer authorizer) {        
    authorizerList.add(authorizer);
   }
 
   public static List<Entity> getEntities(Principal princ, Entity parent) {
-    return getInstance()._getEntities(princ, parent);
+    return getInstance().objGetEntities(princ, parent);
   }
 
   public static List<Entity> getEntities(Principal princ) {
-    return getInstance()._getEntities(princ, null);
+    return getInstance().objGetEntities(princ, null);
   }
   
-  public List<Entity> _getEntities(Principal princ, Entity parent) {
+  public List<Entity> objGetEntities(Principal princ, Entity parent) {
     List<Entity> retval = new ArrayList<Entity>();
     
-    for( SubjectAuthorizer auth: authorizerList) {
+    for (SubjectAuthorizer auth : authorizerList) {
       retval.addAll(auth.getEntities(princ, parent));
     }
     
     return retval;
   }
 
-  public Entity _getEntityByIdentifier(String identifierPath) {
+  public Entity objGetEntityByIdentifier(String identifierPath) {
     Entity retval = null;
 
-    for( SubjectAuthorizer auth: authorizerList) {
+    for (SubjectAuthorizer auth : authorizerList) {
       retval = auth.getEntityByIdentifier(identifierPath);
       if (retval != null) { return retval; }
     }
@@ -180,13 +180,13 @@ public class AuthManager {
    * @return
    */
   public static Entity getEntityByIdentifier(String identifierPath) {
-    return getInstance()._getEntityByIdentifier(identifierPath);
+    return getInstance().objGetEntityByIdentifier(identifierPath);
   }
   
-  private String _getAuhtToken(Principal princ, Entity entity) throws CredentialException {
+  private String objGetAuhtToken(Principal princ, Entity entity) throws CredentialException {
     String retval = null;
 
-    for( SubjectAuthorizer auth: authorizerList) {
+    for (SubjectAuthorizer auth : authorizerList) {
       retval = auth.getAuthToken(princ, entity);
       if (retval != null) { return retval; }
     }
@@ -203,6 +203,6 @@ public class AuthManager {
    * @throws CredentialException 
    */
   public static String getAuthToken(Principal princ, Entity entity) throws CredentialException {
-    return getInstance()._getAuhtToken(princ, entity);
+    return getInstance().objGetAuhtToken(princ, entity);
   }
 }
