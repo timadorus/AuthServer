@@ -156,7 +156,7 @@
             </classpath>
     </taskdef>
 	
-	<target name="test_java" depends="prep-dirs,compile,test-setup,instrument_java" description="run all tests">
+	<target name="test_java" depends="resolve,prep-dirs,compile,test-setup,instrument_java" description="run all tests">
 		<junit fork="yes">
 			<sysproperty key="net.sourceforge.cobertura.datafile" value="${basedir}/cobertura.ser" />
 			<classpath>
