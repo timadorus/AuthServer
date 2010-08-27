@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 
-<project name="TimadorusAuthServer" default="build" basedir=".">
+<project name="TimadorusAuthServer" default="build" basedir="."
+	xmlns:ivy="antlib:org.apache.ivy.ant" >
 
 	<property name="release.version" value="0.1.0"/>
 	
@@ -8,6 +9,10 @@
 	<property name="src.dir" value="${basedir}/src"/>
 	<property name="src.resources" value="${basedir}/resources"/>
 
+	<property name="ivy.dir" value="${basedir}/ivy"/>
+	<property name="ivy.settings.file" value="${ivy.dir}/ivysettings.xml"/>
+	<property name="ivy.cache.dir" value="${ivy.dir}/cache"/>
+	
 	<property name="build.lib" value="${build.dir}/lib"/>
 	<property name="build.resources" value="${build.dir}/resources"/>
 	<property name="build.sources" value="${build.dir}/build_src"/>
@@ -24,6 +29,10 @@
 	<path id="tools.classpath">
 		<pathelement path="${java.class.path}/" />
 		<fileset dir="${tool.dir}">
+			<include name="**/*.jar"/>
+			<include name="**/*.zip"/>
+		</fileset>
+		<fileset dir="${ivy.cache.dir}">
 			<include name="**/*.jar"/>
 			<include name="**/*.zip"/>
 		</fileset>
@@ -49,6 +58,16 @@
 	<!-- load the cobertura task definition --> 
 	<taskdef classpathref="tools.classpath" resource="tasks.properties"/>
 
+	<!-- ================================= 
+	          target: resolve
+	     
+	     let ivy handle depencies to other projects                   
+	     ================================= -->
+    <target name="resolve" description="--> retrieve dependencies with ivy">
+    	<ivy:settings file="${ivy.settings.file}" />
+        <ivy:retrieve />    	
+    </target>
+	
     <!-- ================================= 
           target: prep-dirs             
          ================================= -->
@@ -109,32 +128,10 @@
     	<jar destfile="${basedir}/tas-sgs-authenticator-${release.version}.jar"
     				  basedir="${build.dir}" >
     		<include name="org/timadorus/auth/sgs/*.class"/>
-    		<include name="META-INF/**/*"/>
+    	<!-- <include name="META-INF/**/*"/> -->
     	</jar>
     </target>
 
-
-	<!-- ================================= 
-          target: deployment-jar              
-         ================================= -->
-    <target name="deployment-jar" depends="compile" description="build a jar, deployabel in RDS">
-    	<copy todir="${build.dir}/META-INF">
-    	    <fileset dir="${basedir}/META-INF"/>
-    	  </copy>
-    	<jar destfile="${basedir}/cornerstone.jar"
-    				  basedir="${build.dir}" >
-    		<include name="org/timadorus/cornerstone/**/*.class"/>
-    		<include name="META-INF/**/*"/>
-    	</jar>
-    </target>
-
-	<target name="jar-of-all" depends="compile">
-		<mkdir dir="${build.lib}"/>
-		<jar destfile="${build.lib}/keeper_classes.jar"
-					  basedir="${build.dir}" >
-					<include name="de/harper_hall/keeper/**/*"/>
-				</jar>
-	</target>
 	
 	<!-- ================================= 
           target: instrument java              
