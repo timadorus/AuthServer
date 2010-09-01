@@ -1,14 +1,20 @@
 <ivysettings>
     <properties file="${ivy.settings.dir}/ivysettings-file.properties" />
-	<settings defaultCache="${ivy.cache.dir}" defaultResolver="ibiblio" checkUpToDate="true" />
+    <property name="org.repo.url" value="http://timadorus-hudson.informatik.haw-hamburg.de:8081/artifactory/" />
+	<settings defaultResolver="timadorus-org-rep" />
+	<caches defaultCacheDir="${ivy.cache.dir}" />
     <resolvers>
+		<url name="timadorus-org-rep">
+			<ivy pattern="${org.repo.url}/[module]/[revision]/ivy-[revision].xml" />
+			<artifact pattern="${org.repo.url}/[module]/[revision]/[artifact]-[revision].[ext]" />
+		</url>
     	<ibiblio name="ibiblio" />
-<!--	
-    	<filesystem name="internal">
-    		<ivy pattern="${repository.dir}/[module]/ivy-[revision].xml" />
-			<artifact pattern="${repository.dir}/[module]/[artifact]-[revision].[ext]" />
+	<!--
+		<filesystem name="internal"> <ivy
+		pattern="${repository.dir}/[module]/ivy-[revision].xml" /> <artifact
+		pattern="${repository.dir}/[module]/[artifact]-[revision].[ext]" />
 		</filesystem>
--->
+	-->
 	</resolvers>
 <!--	
 	<modules>
