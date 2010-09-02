@@ -55,7 +55,12 @@
 		<include name="**/*.list"/>
 	</patternset>
 
-	<!-- load the cobertura task definition --> 
+	<!-- load the cobertura task definition
+	    TODO: classical chicken-and-egg problem: I need the cobertura jars in order
+	    to correctly parse the build.xml file. But the jars will only be loaded by ivy
+	    once the build.xml has been parsed. Currently this is solved by running ant
+	    repeatetly. 
+	--> 
 	<taskdef classpathref="tools.classpath" resource="tasks.properties"/>
 
 	<!-- ================================= 
@@ -191,7 +196,7 @@
 	         classpath="${tool.dir}/checkstyle-all-5.0.jar"/>
 
 		
-    <target name="test-checkstyle" depends="test-setup" 
+    <target name="test-checkstyle" depends="resolve,test-setup" 
     	description="--> check the style of the source code and run some static quality checks on the code.">
     	<sequential>
 			<mkdir dir="${basedir}/test-results"/>
@@ -244,6 +249,6 @@
 	        </jar>
 	    </target>
 
-	<target name="build" depends="test-checkstyle, test_java, distjar">
+	<target name="build" depends="resolve, test-checkstyle, test_java, distjar">
 	</target>
 </project>
