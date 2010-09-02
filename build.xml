@@ -7,6 +7,7 @@
 	
 	<property name="build.dir" value="${basedir}/bin"/>
 	<property name="src.dir" value="${basedir}/src"/>
+	<property name="test-src.dir" value="${basedir}/test-src"/>
 	<property name="src.resources" value="${basedir}/resources"/>
 
 	<property name="ivy.dir" value="${basedir}/ivy"/>
@@ -87,9 +88,12 @@
           target: compile              
          ================================= -->
 	<target name="compile" depends="prep-dirs">
-		<javac srcdir="${src.dir}"
-         destdir="${build.dir}"
-         debug="on">
+		<javac  srcdir="${src.dir}" destdir="${build.dir}"
+     			debug="on">
+			<classpath refid="project.classpath"/>
+		</javac>
+		<javac  srcdir="${test-src.dir}" destdir="${build.dir}"
+     			debug="on">
 			<classpath refid="project.classpath"/>
 		</javac>
 	</target>
@@ -156,8 +160,6 @@
 	<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
 			<classpath>
 				<path refid="tools.classpath"/>
-				<pathelement location="${tool.dir}/junit-3.8.2.jar"/>
-				<pathelement  location="${tool.dir}/ant-junit.jar"/>
             </classpath>
     </taskdef>
 	
@@ -170,7 +172,7 @@
 				<pathelement path="${build.dir}"/>
 			</classpath>
 			<formatter type="xml"/>
-			<test name="org.timadorus.cornerstone.CornerstoneSmokeTest"
+			<test name="org.timadorus.auth.test.AuthServiceSmokeTest"
 				todir="${test-report.dir}"/>
 		</junit>
 		<cobertura-report srcdir="${src.dir}" destdir="${test-report.dir}"/>

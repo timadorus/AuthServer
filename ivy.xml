@@ -4,6 +4,8 @@
 		<dependency org="cobertura" name="cobertura" rev="1.9.4.1" />
 		<dependency org="checkstyle" name="checkstyle" rev="5.1"/>
 		<dependency org="com/sun/grizzly" name="grizzly-servlet-webserver" rev="2.0.0-M3" />
+		<dependency org="com/sun/jersey" name="jersey-client" rev="1.3" />
+		<dependency org="reddwarf" name="sgs-server" rev="0.10.1" />		
     </dependencies>
 </ivy-module>
 
