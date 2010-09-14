@@ -3,17 +3,20 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test-src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="lib" path="lib/jsr311-api-1.1.jar"/>
-	<classpathentry kind="lib" path="lib/grizzly-servlet-webserver-1.9.8.jar"/>
-	<classpathentry kind="lib" path="lib/jersey-server-1.1.5.1.jar"/>
-	<classpathentry kind="lib" path="lib/jersey-core-1.1.5.1.jar"/>
-	<classpathentry kind="lib" path="lib/asm-3.1.jar"/>
-	<classpathentry kind="lib" path="lib/gnu.getopt-1.0.12.jar"/>
-	<classpathentry kind="lib" path="lib/jersey-client-1.1.5.jar"/>
-	<classpathentry kind="lib" path="lib/sgs-server-internal-api-0.10.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3.8.1"/>
 	<classpathentry kind="con" path="org.eclipse.hyades.test.tools.core.TPTP_LIBRARIES/org.eclipse.hyades.test.tools.core"/>
-	<classpathentry kind="lib" path="lib/sgs-server-0.10.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JavaDB"/>
+	<classpathentry kind="lib" path="lib/compile/getopt-1.0.13.jar"/>
+	<classpathentry kind="lib" path="lib/compile/java.runner-4.5.2.jar"/>
+	<classpathentry kind="lib" path="lib/compile/sgs-server-api-0.10.1.jar"/>
+	<classpathentry kind="lib" path="lib/compile/sgs-server-internal-api-0.10.1.jar"/>
+	<classpathentry kind="lib" path="lib/compile/jersey-client-1.3.jar"/>
+	<classpathentry kind="lib" path="lib/compile/servlet-api-2.5.jar"/>
+	<classpathentry kind="lib" path="lib/compile/sgs-server-0.10.1.jar"/>
+	<classpathentry kind="lib" path="lib/compile/jersey-server-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/compile/grizzly-http-1.9.18-i.jar"/>
+	<classpathentry kind="lib" path="lib/compile/grizzly-http-servlet-1.9.18-i.jar"/>
+	<classpathentry kind="lib" path="lib/compile/grizzly-servlet-webserver-1.9.18-i.jar"/>
+	<classpathentry kind="lib" path="lib/compile/jersey-core-1.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

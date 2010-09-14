@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-
 <project name="TimadorusAuthServer" default="build" basedir="."
 	xmlns:ivy="antlib:org.apache.ivy.ant" >
 
@@ -7,6 +6,10 @@
 	
 	<property name="build.dir" value="${basedir}/bin"/>
 	<property name="src.dir" value="${basedir}/src"/>
+
+	<property name="lib.dir" value="${basedir}/lib"/>
+	<property name="tool.dir" value="${basedir}/lib"/>
+		
 	<property name="test-src.dir" value="${basedir}/test-src"/>
 	<property name="src.resources" value="${basedir}/resources"/>
 
@@ -17,7 +20,6 @@
 	<property name="build.lib" value="${build.dir}/lib"/>
 	<property name="build.resources" value="${build.dir}/resources"/>
 	<property name="build.sources" value="${build.dir}/build_src"/>
-	<property name="tool.dir" value="${basedir}/lib"/>
 
 	<property name="instrumented.bindir" value="${basedir}/instrumented.bin"/>        
 	<property name="coverage.dir" value="${basedir}/coverage"/>        
@@ -38,7 +40,7 @@
 			<include name="**/*.zip"/>
 		</fileset>
 	</path>
-
+	
 	<path id="project.classpath">
 		<path refid="tools.classpath"/>
 		<fileset dir="${build.dir}">
@@ -56,14 +58,6 @@
 		<include name="**/*.list"/>
 	</patternset>
 
-	<!-- load the cobertura task definition
-	    TODO: classical chicken-and-egg problem: I need the cobertura jars in order
-	    to correctly parse the build.xml file. But the jars will only be loaded by ivy
-	    once the build.xml has been parsed. Currently this is solved by running ant
-	    repeatetly. 
-	--> 
-	<taskdef classpathref="tools.classpath" resource="tasks.properties"/>
-
 	<!-- ================================= 
 	          target: resolve
 	     
@@ -71,7 +65,14 @@
 	     ================================= -->
     <target name="resolve" description="--> retrieve dependencies with ivy">
     	<ivy:settings file="${ivy.settings.file}" />
-        <ivy:retrieve />    	
+        <ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true" />
+	
+		<!-- after (hopefully) retrieving all dependencies, add the tasks -->
+		<taskdef classpathref="tools.classpath" resource="tasks.properties"/>
+		<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask"
+				 classpathref="tools.classpath" />
+		<taskdef resource="checkstyletask.properties"   classpathref="tools.classpath"/>
+
     </target>
 	
     <!-- ================================= 
@@ -157,11 +158,6 @@
 	<!-- ================================= 
           target: test_java              
          ================================= -->
-	<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
-			<classpath>
-				<path refid="tools.classpath"/>
-            </classpath>
-    </taskdef>
 	
 	<target name="test_java" depends="resolve,prep-dirs,compile,test-setup,instrument_java" description="run all tests">
 		<junit fork="yes">
@@ -193,13 +189,9 @@
 
 	<!-- ================================= 
           target: test-checkstyle              
-         ================================= -->
-	<taskdef resource="checkstyletask.properties"
-	         classpath="${tool.dir}/checkstyle-all-5.0.jar"/>
-
-		
+         ================================= -->	
     <target name="test-checkstyle" depends="resolve,test-setup" 
-    	description="--> check the style of the source code and run some static quality checks on the code.">
+    	description="--> check the style of the source code and run some static quality checks on the code.">	    
     	<sequential>
 			<mkdir dir="${basedir}/test-results"/>
             <checkstyle config="${basedir}/checkstyle.xml" failOnViolation="true">
@@ -220,13 +212,7 @@
 		<delete dir="${build.dir}/resources"  includeemptydirs="true" />
 		<delete dir="${instrumented.bindir}"/>
 		<delete file="${basedir}/cobertura.ser"/>
-		<delete verbose="true">
-			<fileset dir="${build.dir}/" >
-				<include name="*.ear"/>
-				<include name="*.war"/>
-				<include name="*.sar"/>
-			</fileset>
-		</delete>
+	    <ivy:cleancache/>
 	</target>
 	
 	<!-- ================================= 
