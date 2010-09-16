@@ -137,7 +137,8 @@ public class AuthClient {
     SSLContext ctx;
     try {
       ctx = SSLContext.getInstance("SSL");
-      ctx.init(null, myTrustManager, null);    
+      ctx.init(null, myTrustManager, null);
+      
       config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, 
                                  new HTTPSProperties(new MyHostnameVerifier(), ctx));
       Client client = Client.create(config);
