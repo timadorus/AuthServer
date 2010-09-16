@@ -66,8 +66,7 @@ public class AuthServer {
     }
 
     adapter.setServletInstance(new ServletContainer());
-    adapter.setContextPath("/");
-    adapter.setResourcesContextPath("/");
+    adapter.setContextPath("/");    
 
     final SSLSelectorThread selectorThread = new SSLSelectorThread();
     try {
@@ -101,6 +100,10 @@ public class AuthServer {
   }    
 
 
+  protected void usage() {
+    System.err.println("usage: authserver [-h HOST] [-p PORT] [-t TRUSTSTORE_PATH] [-s SERVER_KEY_SECRET]\n");
+  }
+  
   public void parseArgs(String[] args) throws IOException, URISyntaxException {
     
     Getopt g = new Getopt("authserver", args, "h:p:t:s:");
@@ -157,6 +160,9 @@ public class AuthServer {
             runUsage = true;
           }
       }
+    
+    if (runUsage) { usage(); }
+    
     }
     
   public void start() throws IOException, URISyntaxException {
