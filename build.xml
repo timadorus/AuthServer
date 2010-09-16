@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <project name="TimadorusAuthServer" default="build" basedir="."
-	xmlns:ivy="antlib:org.apache.ivy.ant" >
+	xmlns:ivy="antlib:org.apache.ivy.ant" xmlns="antlib:org.apache.tools.ant">
 
 	<property name="release.version" value="0.1.0"/>
 	
@@ -81,8 +81,10 @@
 	     ================================= -->
     <target name="resolve" description="--> retrieve dependencies with ivy">
     	<ivy:settings file="${ivy.settings.file}" />
+	    <ivy:resolve />
         <ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true" />
-	
+	    <ivy:report todir="${ivy.dir}/reports"/>
+
 		<!-- after (hopefully) retrieving all dependencies, add the tasks -->
 		<!-- cobertura -->
 		<taskdef classpathref="testing.classpath" resource="tasks.properties"/>
