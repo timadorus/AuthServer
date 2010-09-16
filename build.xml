@@ -29,6 +29,22 @@
 	<property name="doc.apidoc.dir" value="${doc.dir}/apidoc"/>
 	
 	<!-- Classpath definiton -->
+	<path id="compile.classpath">
+		<pathelement path="${java.class.path}/" />
+		<fileset dir="${tool.dir}">
+			<include name="**/*.jar"/>
+			<include name="**/*.zip"/>
+		</fileset>
+	</path>
+
+	<path id="testing.classpath">
+		<pathelement path="${java.class.path}/" />
+		<fileset dir="${tool.dir}/testing">
+			<include name="**/*.jar"/>
+			<include name="**/*.zip"/>
+		</fileset>
+	</path>
+
 	<path id="tools.classpath">
 		<pathelement path="${java.class.path}/" />
 		<fileset dir="${tool.dir}">
@@ -40,7 +56,7 @@
 			<include name="**/*.zip"/>
 		</fileset>
 	</path>
-	
+
 	<path id="project.classpath">
 		<path refid="tools.classpath"/>
 		<fileset dir="${build.dir}">
@@ -68,10 +84,13 @@
         <ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true" />
 	
 		<!-- after (hopefully) retrieving all dependencies, add the tasks -->
-		<taskdef classpathref="tools.classpath" resource="tasks.properties"/>
+		<!-- cobertura -->
+		<taskdef classpathref="testing.classpath" resource="tasks.properties"/>
+	    <!-- JUnit -->
 		<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask"
-				 classpathref="tools.classpath" />
-		<taskdef resource="checkstyletask.properties"   classpathref="tools.classpath"/>
+				 classpathref="testing.classpath" />
+		<!-- Checkstyle -->
+		<taskdef resource="checkstyletask.properties"   classpathref="testing.classpath"/>
 
     </target>
 	
@@ -91,7 +110,7 @@
 	<target name="compile" depends="prep-dirs">
 		<javac  srcdir="${src.dir}" destdir="${build.dir}"
      			debug="on">
-			<classpath refid="project.classpath"/>
+			<classpath refid="compile.classpath"/>
 		</javac>
 		<javac  srcdir="${test-src.dir}" destdir="${build.dir}"
      			debug="on">
@@ -207,12 +226,15 @@
           target: clean              
          ================================= -->
 	<target name="clean" description="delete all derived objects">
+
 		<delete dir="${build.dir}/org" includeemptydirs="true" />
-		<delete dir="${build.dir}/lib"  includeemptydirs="true" />
+	    <delete dir="${build.dir}/lib"  includeemptydirs="true" />
 		<delete dir="${build.dir}/resources"  includeemptydirs="true" />
 		<delete dir="${instrumented.bindir}"/>
 		<delete file="${basedir}/cobertura.ser"/>
-	    <ivy:cleancache/>
+
+		<ivy:cleancache/>
+    	<delete dir="${lib.dir}"  includeemptydirs="true" />
 	</target>
 	
 	<!-- ================================= 
