@@ -192,7 +192,8 @@
 			<test name="org.timadorus.auth.test.AuthServiceSmokeTest"
 				todir="${test-report.dir}"/>
 		</junit>
-		<cobertura-report srcdir="${src.dir}" destdir="${test-report.dir}"/>
+		<cobertura-report srcdir="${src.dir}" destdir="${test-report.dir}" format="xml"/>
+   		<cobertura-report srcdir="${src.dir}" destdir="${test-report.dir}"/>
 	</target>
 
 	<!-- ================================= 
