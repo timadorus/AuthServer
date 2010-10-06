@@ -34,7 +34,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.timadorus.auth.Base64;
 
-/**
+/** Do some test with the crypto stuff
  * @author sage
  *
  */
