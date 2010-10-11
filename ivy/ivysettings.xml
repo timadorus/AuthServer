@@ -1,6 +1,6 @@
 <ivysettings>
     <properties file="${ivy.settings.dir}/ivysettings-file.properties" />
-    <property name="org.repo.url" value="http://timadorus-hudson.informatik.haw-hamburg.de:8081/artifactory" />
+    <property name="org.repo.url" value="http://developer.timadorus.org/artifactory" />
 	<settings defaultResolver="ivy-and-maven" />
 	<caches defaultCacheDir="${ivy.cache.dir}" />
     <resolvers>
