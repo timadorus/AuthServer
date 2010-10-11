@@ -62,9 +62,9 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
     Connection conn = getDbConn();
 
     //  Prepare the insert statement to use
-    psGetUser = dbConn.prepareStatement("select password from users where user_name = ? ");
+    psGetUser = conn.prepareStatement("select password from users where user_name = ? ");
     
-    psGetEntities = dbConn.prepareStatement("select * from entitiesPerPrincipal where user_id = ? ");
+    psGetEntities = conn.prepareStatement("select * from entitiesPerPrincipal where user_id = ? ");
     
   }
   

@@ -45,7 +45,8 @@ public class AuthServiceSmokeTest extends HyadesTestCase {
   /**
    * testDummy
    *
-   * This Test serves the sole purpose of having a test in existence, so that the automated build environment can be set up properly
+   * This Test serves the sole purpose of having a test in existence, so that the automated build 
+   * environment can be set up properly
    * 
    * @throws Exception
    */
