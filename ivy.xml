@@ -19,9 +19,9 @@
 		<dependency org="org.apache.derby" name="derby" rev="10.6.1.0" conf="compile->master;runtime->master"/>
 		
 		<!--  tools -->
+		<dependency org="junit" name="junit" rev="4.8.2"/>
 		<dependency org="cobertura" name="cobertura" rev="1.9.4.1" conf="testing->runtime"/>
 		<dependency org="checkstyle" name="checkstyle" rev="5.1" conf="testing->runtime" />
-		<dependency org="org.eclipse.hyades" name="test-tools-core" rev="4.5.2" conf="testing->runtime"/>
 		
     </dependencies>
 </ivy-module>

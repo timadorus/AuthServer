@@ -2,10 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test-src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3.8.1"/>
-	<classpathentry kind="con" path="org.eclipse.hyades.test.tools.core.TPTP_LIBRARIES/org.eclipse.hyades.test.tools.core"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JavaDB"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.6.0_24"/>
 	<classpathentry kind="lib" path="lib/compile/getopt-1.0.13.jar"/>
 	<classpathentry kind="lib" path="lib/compile/sgs-server-api-0.10.1.jar"/>
 	<classpathentry kind="lib" path="lib/compile/sgs-server-internal-api-0.10.1.jar"/>
@@ -17,5 +14,6 @@
 	<classpathentry kind="lib" path="lib/compile/grizzly-http-1.8.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/compile/grizzly-http-servlet-1.8.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/compile/grizzly-servlet-webserver-1.8.6.4.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
