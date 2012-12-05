@@ -171,6 +171,8 @@
                 changeLogFile="${src.dir}/org/timadorus/auth/server/db/changelog/db.changelog-master.xml"
             	driver="org.apache.derby.jdbc.EmbeddedDriver"
             	url="jdbc:derby:${dbName};create=true"
+         	    username="authserv"
+         	    password="ty32re8pu"
          	    classpathref="compile.classpath"
             />
     </target>
