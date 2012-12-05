@@ -156,10 +156,8 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
     keyData = data.getBytes();
   }
   
-  /**
-   * @see org.timadorus.auth.server.SubjectAuthorizer#getAuthToken(org.timadorus.auth.server.Entity, java.security.Principal)
-   *
-   * returns a base64 encoded authenticator string, containing the current time as milliseconds since the epoch.
+  /** returns a base64 encoded authenticator string, containing the current 
+   *  time as milliseconds since the epoch.
    * 
    * TODO: This is a design weakness: a crypto-attacker could guess the first 5-6 Bytes of the message.
    *  
@@ -225,13 +223,6 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
     return getEntities(princ, null);
   }
 
-  /**
-   * @see org.timadorus.auth.server.SubjectAuthorizer#getEntities(java.security.Principal, org.timadorus.auth.server.Entity)
-   *
-   * @param princ
-   * @param parent
-   * @return
-   */
   @Override
   public List<Entity> getEntities(Principal princ, Entity parent) {
     List<SimpleEntity> candidate = entitiesPerPrincipal.get(princ);

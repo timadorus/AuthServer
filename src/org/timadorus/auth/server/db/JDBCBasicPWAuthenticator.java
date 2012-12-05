@@ -17,7 +17,7 @@
  * MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
  */
 
-package org.timadorus.auth.server;
+package org.timadorus.auth.server.db;
 
 import java.security.Principal;
 import java.sql.Connection;
@@ -28,6 +28,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import javax.security.auth.login.LoginException;
+
+import org.timadorus.auth.server.BasicUserPasswordCredential;
+import org.timadorus.auth.server.Identity;
+import org.timadorus.auth.server.IdentityAuthenticator;
+import org.timadorus.auth.server.IdentityCredentials;
 
 
 
@@ -102,7 +107,7 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
 
   }
 
-  /** init database
+  /** init database.
    * 
    * load the JDBC driver and open a connection to the database.
    * 
@@ -222,13 +227,6 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
   }  //  END SQLExceptionPrint
 
 
-  /**
-   * @see org.timadorus.auth.server.IdentityAuthenticator#authenticateIdentity(org.timadorus.auth.server.IdentityCredentials)
-   *
-   * @param credentials
-   * @return
-   * @throws LoginException
-   */
   @Override
   public Principal authenticateIdentity(IdentityCredentials credentials) throws LoginException {
     if (!(credentials instanceof BasicUserPasswordCredential)) { 
@@ -251,7 +249,8 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
   public Principal addUser(String user, String password) {
     Connection conn = getDbConn();
 
-    String insertString = "insert into users ( user_name, password ) values ('" + user + "', '" + password + "') ";
+    String insertString = "insert into users ( user_name, password ) values ('" 
+                          + user + "', '" + password + "') ";
     
     try {
       Statement s = conn.createStatement();

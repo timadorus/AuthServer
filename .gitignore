@@ -4,3 +4,4 @@
 /instrumented.bin
 /coverage
 /jacoco.exec
+/jdbcDemoDB

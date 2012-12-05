@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.timadorus.auth.server.SimpleAuthorizer.SimpleEntity;
+import org.timadorus.auth.server.db.JDBCBasicPWAuthenticator;
 
 import com.sun.grizzly.SSLConfig;
 import com.sun.grizzly.http.servlet.ServletAdapter;

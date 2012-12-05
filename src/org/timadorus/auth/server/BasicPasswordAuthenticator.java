@@ -39,13 +39,6 @@ public class BasicPasswordAuthenticator implements IdentityAuthenticator {
     pwCombos.put(user, password);
   }
   
-  /**
-   * @see org.timadorus.auth.server.IdentityAuthenticator#authenticateIdentity(org.timadorus.auth.server.IdentityCredentials)
-   *
-   * @param credentials
-   * @return
-   * @throws LoginException
-   */
   @Override
   public Principal authenticateIdentity(IdentityCredentials credentials) throws LoginException {
     if (!(credentials instanceof BasicUserPasswordCredential)) { 

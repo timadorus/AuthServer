@@ -30,7 +30,7 @@
 	<!-- Classpath definiton -->
 	<path id="compile.classpath">
 		<pathelement path="${java.class.path}/" />
-		<fileset dir="${tool.dir}">
+		<fileset dir="${tool.dir}/compile">
 			<include name="**/*.jar" />
 			<include name="**/*.zip" />
 		</fileset>
@@ -44,20 +44,16 @@
 		</fileset>
 	</path>
 
-	<path id="tools.classpath">
-		<pathelement path="${java.class.path}/" />
-		<fileset dir="${tool.dir}">
-			<include name="**/*.jar" />
-			<include name="**/*.zip" />
-		</fileset>
-		<fileset dir="${ivy.cache.dir}">
-			<include name="**/*.jar" />
-			<include name="**/*.zip" />
-		</fileset>
-	</path>
+    <path id="runtime.classpath">
+        <pathelement path="${java.class.path}/" />
+        <fileset dir="${tool.dir}/testing">
+            <include name="**/*.jar" />
+            <include name="**/*.zip" />
+        </fileset>
+    </path>
 
 	<path id="project.classpath">
-		<path refid="tools.classpath" />
+		<path refid="runtime.classpath" />
 		<fileset dir="${build.dir}">
 			<include name="**/*.jar" />
 			<include name="**/*.zip" />
@@ -95,6 +91,7 @@
 		<!-- Checkstyle -->
 		<taskdef resource="checkstyletask.properties" classpathref="testing.classpath" />
 
+		<taskdef resource="liquibasetasks.properties" classpathref="compile.classpath"/>
 	</target>
 
 	<!-- ================================= 
@@ -159,6 +156,25 @@
 		</jar>
 	</target>
 
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: test-db-create
+          !!! only used for testing !!! 
+          
+          Will drop the whole database before starting!
+                                
+         - - - - - - - - - - - - - - - - - -->
+    <target name="test-db-create" depends="resolve">
+    	<property name="dbName" value="jdbcDemoDB"/>
+
+         <updateDatabase
+         	    dropFirst="true"
+                changeLogFile="${src.dir}/org/timadorus/auth/server/db/changelog/db.changelog-master.xml"
+            	driver="org.apache.derby.jdbc.EmbeddedDriver"
+            	url="jdbc:derby:${dbName};create=true"
+         	    classpathref="compile.classpath"
+            />
+    </target>
+
 	<!-- ================================= 
           target: test_java              
          ================================= -->
@@ -167,7 +183,7 @@
 		<jacoco:coverage>
 			<junit fork="yes" haltonfailure="yes" showoutput="on">
 				<classpath>
-					<path refid="tools.classpath" />
+					<path refid="testing.classpath" />
 					<pathelement path="${instrumented.bindir}" />
 					<pathelement path="${build.dir}" />
 				</classpath>

@@ -25,6 +25,9 @@
         <dependency org="org.apache.derby" name="derbynet" rev="10.6.2.1" conf="*->default" />
         <dependency org="org.apache.derby" name="derbytools" rev="10.6.2.1" conf="*->default" />
 		
+		<!-- liquibase -->
+		<dependency org="org.liquibase" name="liquibase-core" rev="2.0.5" conf="compile,testing->default"/>
+		
 		<!--  tools -->
 		<dependency org="junit" name="junit" rev="4.8.2"/>
 		        <dependency org="org.jacoco" name="org.jacoco.ant" rev="0.5.7.201204190339" conf="testing->default">
