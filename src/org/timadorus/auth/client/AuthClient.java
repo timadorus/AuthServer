@@ -33,7 +33,6 @@ import javax.net.ssl.X509TrustManager;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 
@@ -132,7 +131,7 @@ public class AuthClient {
 
   public AuthClient(String baseURI) {
 
-    ClientConfig config = new DefaultClientConfig();
+    DefaultClientConfig config = new DefaultClientConfig();
 
     SSLContext ctx;
     try {

@@ -8,12 +8,13 @@
 	<classpathentry kind="lib" path="lib/compile/sgs-server-internal-api-0.10.1.jar"/>
 	<classpathentry kind="lib" path="lib/compile/servlet-api-2.5.jar"/>
 	<classpathentry kind="lib" path="lib/compile/sgs-server-0.10.1.jar"/>
-	<classpathentry kind="lib" path="lib/compile/jersey-server-1.4.jar"/>
-	<classpathentry kind="lib" path="lib/compile/jersey-core-1.4.jar"/>
-	<classpathentry kind="lib" path="lib/compile/jersey-client-1.4.jar"/>
-	<classpathentry kind="lib" path="lib/compile/grizzly-http-1.8.6.4.jar"/>
-	<classpathentry kind="lib" path="lib/compile/grizzly-http-servlet-1.8.6.4.jar"/>
-	<classpathentry kind="lib" path="lib/compile/grizzly-servlet-webserver-1.8.6.4.jar"/>
+	<classpathentry kind="lib" path="lib/compile/jersey-client-1.14.jar"/>
+	<classpathentry kind="lib" path="lib/compile/grizzly-servlet-webserver-1.9.54.jar"/>
+	<classpathentry kind="lib" path="lib/compile/jersey-core-1.14.jar"/>
+	<classpathentry kind="lib" path="lib/compile/jersey-servlet-1.14.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="lib/compile/grizzly-http-1.9.54.jar"/>
+	<classpathentry kind="lib" path="lib/compile/grizzly-http-servlet-1.9.54.jar"/>
+	<classpathentry kind="lib" path="lib/compile/jersey-server-1.14.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

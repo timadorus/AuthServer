@@ -1,77 +1,76 @@
 <?xml version="1.0"?>
-<project name="TimadorusAuthServer" default="build" basedir="."
-	xmlns:ivy="antlib:org.apache.ivy.ant" xmlns="antlib:org.apache.tools.ant">
+<project name="TimadorusAuthServer" default="build" basedir="." xmlns="antlib:org.apache.tools.ant" xmlns:ivy="antlib:org.apache.ivy.ant" xmlns:jacoco="antlib:org.jacoco.ant">
 
-	<property name="release.version" value="0.1.0"/>
-	
-	<property name="build.dir" value="${basedir}/bin"/>
-	<property name="src.dir" value="${basedir}/src"/>
+	<property name="release.version" value="0.1.0" />
 
-	<property name="lib.dir" value="${basedir}/lib"/>
-	<property name="tool.dir" value="${basedir}/lib"/>
-		
-	<property name="test-src.dir" value="${basedir}/test-src"/>
-	<property name="src.resources" value="${basedir}/resources"/>
+	<property name="build.dir" value="${basedir}/bin" />
+	<property name="src.dir" value="${basedir}/src" />
 
-	<property name="ivy.dir" value="${basedir}/ivy"/>
-	<property name="ivy.settings.file" value="${ivy.dir}/ivysettings.xml"/>
-	<property name="ivy.cache.dir" value="${ivy.dir}/cache"/>
-	
-	<property name="build.lib" value="${build.dir}/lib"/>
-	<property name="build.resources" value="${build.dir}/resources"/>
-	<property name="build.sources" value="${build.dir}/build_src"/>
+	<property name="lib.dir" value="${basedir}/lib" />
+	<property name="tool.dir" value="${basedir}/lib" />
 
-	<property name="instrumented.bindir" value="${basedir}/instrumented.bin"/>        
-	<property name="coverage.dir" value="${basedir}/coverage"/>        
-	<property name="test-report.dir" value="${basedir}/test-results"/>
-		
-	<property name="doc.dir" value="${basedir}/doc"/>
-	<property name="doc.apidoc.dir" value="${doc.dir}/apidoc"/>
-	
+	<property name="test-src.dir" value="${basedir}/test-src" />
+	<property name="src.resources" value="${basedir}/resources" />
+
+	<property name="ivy.dir" value="${basedir}/ivy" />
+	<property name="ivy.settings.file" value="${ivy.dir}/ivysettings.xml" />
+	<property name="ivy.cache.dir" value="${ivy.dir}/cache" />
+
+	<property name="build.lib" value="${build.dir}/lib" />
+	<property name="build.resources" value="${build.dir}/resources" />
+	<property name="build.sources" value="${build.dir}/build_src" />
+
+	<property name="instrumented.bindir" value="${basedir}/instrumented.bin" />
+	<property name="coverage.dir" value="${basedir}/coverage" />
+	<property name="test-report.dir" value="${basedir}/test-results" />
+
+	<property name="doc.dir" value="${basedir}/doc" />
+	<property name="doc.apidoc.dir" value="${doc.dir}/apidoc" />
+
 	<!-- Classpath definiton -->
 	<path id="compile.classpath">
 		<pathelement path="${java.class.path}/" />
 		<fileset dir="${tool.dir}">
-			<include name="**/*.jar"/>
-			<include name="**/*.zip"/>
+			<include name="**/*.jar" />
+			<include name="**/*.zip" />
 		</fileset>
 	</path>
 
 	<path id="testing.classpath">
 		<pathelement path="${java.class.path}/" />
 		<fileset dir="${tool.dir}/testing">
-			<include name="**/*.jar"/>
-			<include name="**/*.zip"/>
+			<include name="**/*.jar" />
+			<include name="**/*.zip" />
 		</fileset>
 	</path>
 
 	<path id="tools.classpath">
 		<pathelement path="${java.class.path}/" />
 		<fileset dir="${tool.dir}">
-			<include name="**/*.jar"/>
-			<include name="**/*.zip"/>
+			<include name="**/*.jar" />
+			<include name="**/*.zip" />
 		</fileset>
 		<fileset dir="${ivy.cache.dir}">
-			<include name="**/*.jar"/>
-			<include name="**/*.zip"/>
+			<include name="**/*.jar" />
+			<include name="**/*.zip" />
 		</fileset>
 	</path>
 
 	<path id="project.classpath">
-		<path refid="tools.classpath"/>
+		<path refid="tools.classpath" />
 		<fileset dir="${build.dir}">
-			<include name="**/*.jar"/>
-			<include name="**/*.zip"/>
+			<include name="**/*.jar" />
+			<include name="**/*.zip" />
 		</fileset>
-		<pathelement path="${build.dir}"/>
+		<pathelement path="${build.dir}" />
 	</path>
 
 
 	<patternset id="meta.files">
-		<include name="**/*.xml"/>
-		<include name="**/*.properties"/>
-		<include name="**/*.txt"/>		
-		<include name="**/*.list"/>
+		<include name="**/*.xml" />
+		<include name="**/*.properties" />
+		<include name="**/*.txt" />
+		<include name="**/*.list" />
 	</patternset>
 
 	<!-- ================================= 
@@ -79,151 +78,153 @@
 	     
 	     let ivy handle depencies to other projects                   
 	     ================================= -->
-    <target name="resolve" description="--> retrieve dependencies with ivy">
-    	<ivy:settings file="${ivy.settings.file}" />
-	    <ivy:resolve />
-        <ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true" />
-	    <ivy:report todir="${ivy.dir}/reports"/>
+	<target name="resolve" description="--> retrieve dependencies with ivy">
+		<ivy:settings file="${ivy.settings.file}" />
+		<ivy:resolve />
+		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true" />
+		<ivy:report todir="${ivy.dir}/reports" />
 
 		<!-- after (hopefully) retrieving all dependencies, add the tasks -->
-		<!-- cobertura -->
-		<taskdef classpathref="testing.classpath" resource="tasks.properties"/>
-	    <!-- JUnit -->
-		<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask"
-				 classpathref="testing.classpath" />
-		<!-- Checkstyle -->
-		<taskdef resource="checkstyletask.properties"   classpathref="testing.classpath"/>
 
-    </target>
-	
-    <!-- ================================= 
+		<!-- JaCoCo -->
+         <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml"
+              classpathref="testing.classpath"/>
+		
+		<!-- JUnit -->
+		<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask" 
+			classpathref="testing.classpath" />
+		
+		<!-- Checkstyle -->
+		<taskdef resource="checkstyletask.properties" classpathref="testing.classpath" />
+
+	</target>
+
+	<!-- ================================= 
           target: prep-dirs             
          ================================= -->
-    <target name="prep-dirs" description="--> set directories, basic files, etc.">
-        <mkdir dir="${build.dir}"/>
-    	<mkdir dir="${instrumented.bindir}"/>
-		<mkdir dir="${test-report.dir}"/>
-    	<mkdir dir="${coverage.dir}"/>
-    </target>
+	<target name="prep-dirs" description="--> set directories, basic files, etc.">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${instrumented.bindir}" />
+		<mkdir dir="${test-report.dir}" />
+		<mkdir dir="${coverage.dir}" />
+	</target>
 
 	<!-- ================================= 
           target: compile              
          ================================= -->
 	<target name="compile" depends="prep-dirs">
-		<javac  srcdir="${src.dir}" destdir="${build.dir}"
-     			debug="on">
-			<classpath refid="compile.classpath"/>
+		<javac srcdir="${src.dir}" destdir="${build.dir}" debug="on" includeAntRuntime="false">
+			<classpath refid="compile.classpath" />
 		</javac>
-		<javac  srcdir="${test-src.dir}" destdir="${build.dir}"
-     			debug="on">
-			<classpath refid="project.classpath"/>
+		<javac srcdir="${test-src.dir}" destdir="${build.dir}" debug="on" includeAntRuntime="false">
+			<classpath refid="project.classpath" />
 		</javac>
 	</target>
 
 	<!-- - - - - - - - - - - - - - - - - - 
           target: tas-server.jar          
          - - - - - - - - - - - - - - - - - -->
-    <target name="tas-server.jar" depends="compile">
-    	<copy todir="${build.dir}/META-INF">
-	    	<fileset dir="${basedir}/META-INF"/>
-    	</copy>
-    	<jar destfile="${basedir}/tas-server-${release.version}.jar"
-    				  basedir="${build.dir}" >
-    		<include name="org/timadorus/auth/*.class"/>
-    		<include name="org/timadorus/auth/server/*.class"/>
-    		<include name="META-INF/**/*"/>
-    	</jar>
-    </target>
+	<target name="tas-server.jar" depends="compile">
+		<copy todir="${build.dir}/META-INF">
+			<fileset dir="${basedir}/META-INF" />
+		</copy>
+		<jar destfile="${basedir}/tas-server-${release.version}.jar" basedir="${build.dir}">
+			<include name="org/timadorus/auth/*.class" />
+			<include name="org/timadorus/auth/server/*.class" />
+			<include name="META-INF/**/*" />
+		</jar>
+	</target>
 
 	<!-- - - - - - - - - - - - - - - - - - 
           target: tas-client.jar          
          - - - - - - - - - - - - - - - - - -->
-    <target name="tas-client.jar" depends="compile">
-    	<copy todir="${build.dir}/META-INF">
-	    	<fileset dir="${basedir}/META-INF"/>
-    	</copy>
-    	<jar destfile="${basedir}/tas-client-${release.version}.jar"
-    				  basedir="${build.dir}" >
-    		<include name="org/timadorus/auth/client/*.class"/>
-    		<include name="META-INF/**/*"/>
-    	</jar>
-    </target>
+	<target name="tas-client.jar" depends="compile">
+		<copy todir="${build.dir}/META-INF">
+			<fileset dir="${basedir}/META-INF" />
+		</copy>
+		<jar destfile="${basedir}/tas-client-${release.version}.jar" basedir="${build.dir}">
+			<include name="org/timadorus/auth/client/*.class" />
+			<include name="META-INF/**/*" />
+		</jar>
+	</target>
 
 	<!-- - - - - - - - - - - - - - - - - - 
           target: tas-sgs-authenticator.jar          
          - - - - - - - - - - - - - - - - - -->
-    <target name="tas-sgs-authenticator.jar" depends="compile">
-    	<copy todir="${build.dir}/META-INF">
-	    	<fileset dir="${basedir}/META-INF"/>
-    	</copy>
-    	<jar destfile="${basedir}/tas-sgs-authenticator-${release.version}.jar"
-    				  basedir="${build.dir}" >
-    		<include name="org/timadorus/auth/sgs/*.class"/>
-    	<!-- <include name="META-INF/**/*"/> -->
-    	</jar>
-    </target>
-
-	
-	<!-- ================================= 
-          target: instrument java              
-         ================================= -->
-	<target name="instrument_java">
-		<cobertura-instrument todir="${instrumented.bindir}" datafile="${basedir}/cobertura.ser">
-		    <fileset dir="${build.dir}">
-		        <include name="**/*.class"/>
-		    	<exclude name="**/*$?.class"/>
-		    </fileset>
-		</cobertura-instrument>
+	<target name="tas-sgs-authenticator.jar" depends="compile">
+		<copy todir="${build.dir}/META-INF">
+			<fileset dir="${basedir}/META-INF" />
+		</copy>
+		<jar destfile="${basedir}/tas-sgs-authenticator-${release.version}.jar" basedir="${build.dir}">
+			<include name="org/timadorus/auth/sgs/*.class" />
+			<!-- <include name="META-INF/**/*"/> -->
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: test_java              
          ================================= -->
-	
-	<target name="test_java" depends="resolve,prep-dirs,compile,test-setup,instrument_java" description="run all tests">
-		<junit fork="yes">
-			<sysproperty key="net.sourceforge.cobertura.datafile" value="${basedir}/cobertura.ser" />
-			<classpath>
-				<path refid="tools.classpath"/>
-				<pathelement path="${instrumented.bindir}"/>
-				<pathelement path="${build.dir}"/>
-			</classpath>
-			<formatter type="xml"/>
-			<test name="org.timadorus.auth.test.AuthServiceSmokeTest"
-				todir="${test-report.dir}"/>
-		</junit>
-		<cobertura-report srcdir="${src.dir}" destdir="${test-report.dir}" format="xml"/>
-   		<cobertura-report srcdir="${src.dir}" destdir="${test-report.dir}"/>
+
+	<target name="test_java" depends="resolve,prep-dirs,compile,test-setup" description="run all tests">
+		<jacoco:coverage>
+			<junit fork="yes" haltonfailure="yes" showoutput="on">
+				<classpath>
+					<path refid="tools.classpath" />
+					<pathelement path="${instrumented.bindir}" />
+					<pathelement path="${build.dir}" />
+				</classpath>
+				<jvmarg value="-XX:-UseSplitVerifier" />
+				<!-- to make emma work with Java7 -->
+				<formatter type="xml" />
+				<formatter type="plain" usefile="false" />
+				<test name="org.timadorus.auth.test.AuthServiceSmokeTest" todir="${test-report.dir}" />
+			</junit>
+		</jacoco:coverage>
+
+		<!-- prepare the coverage report -->
+		<jacoco:report>
+			<executiondata>
+				<file file="jacoco.exec" />
+			</executiondata>
+
+			<structure name="TimadorusAuthServer">
+				<sourcefiles encoding="UTF-8">
+					<fileset dir="${src.dir}" />
+					<fileset dir="${test-src.dir}" />
+				</sourcefiles>
+			</structure>
+
+			<html destdir="${coverage.dir}" />
+		</jacoco:report>
 	</target>
 
 	<!-- ================================= 
           target: test-setup              
          ================================= -->
-    <target name="test-setup" depends="" description="copies all needed file into the directory ${build.dir}/resources to prepare for the tests to find it">
-		<mkdir dir="${build.resources}"/>
+	<target name="test-setup" depends="" description="copies all needed file into the directory ${build.dir}/resources to prepare for the tests to find it">
+		<mkdir dir="${build.resources}" />
 		<copy todir="${build.resources}">
-		    <fileset dir="${src.dir}">
-		    	<patternset refid="meta.files"/>
-		    </fileset>
-		</copy>    	
-    	
-    </target>
+			<fileset dir="${src.dir}">
+				<patternset refid="meta.files" />
+			</fileset>
+		</copy>
+
+	</target>
 
 	<!-- ================================= 
           target: test-checkstyle              
-         ================================= -->	
-    <target name="test-checkstyle" depends="resolve,test-setup" 
-    	description="--> check the style of the source code and run some static quality checks on the code.">	    
-    	<sequential>
-			<mkdir dir="${basedir}/test-results"/>
-            <checkstyle config="${basedir}/checkstyle.xml" failOnViolation="true">
+         ================================= -->
+	<target name="test-checkstyle" depends="resolve,test-setup" description="--> check the style of the source code and run some static quality checks on the code.">
+		<sequential>
+			<mkdir dir="${basedir}/test-results" />
+			<checkstyle config="${basedir}/checkstyle.xml" failOnViolation="true">
 				<formatter type="plain" />
-    	        <formatter type="xml" toFile="${basedir}/test-results/checkstyle-log.xml" />
-    	        <fileset dir="${src.dir}" includes="**/*.java" />
-    	        <property key="checkstyle.cache.file" file="${build.dir}/checkstyle-cache" />
-    	    </checkstyle>
-    	</sequential>
-    </target>
+				<formatter type="xml" toFile="${basedir}/test-results/checkstyle-log.xml" />
+				<fileset dir="${src.dir}" includes="**/*.java" />
+				<property key="checkstyle.cache.file" file="${build.dir}/checkstyle-cache" />
+			</checkstyle>
+		</sequential>
+	</target>
 
 	<!-- ================================= 
           target: clean              
@@ -231,37 +232,38 @@
 	<target name="clean" description="delete all derived objects">
 
 		<delete dir="${build.dir}/org" includeemptydirs="true" />
-	    <delete dir="${build.dir}/lib"  includeemptydirs="true" />
-		<delete dir="${build.dir}/resources"  includeemptydirs="true" />
-		<delete dir="${instrumented.bindir}"/>
-		<delete file="${basedir}/cobertura.ser"/>
+		<delete dir="${build.dir}/lib" includeemptydirs="true" />
+		<delete dir="${build.dir}/resources" includeemptydirs="true" />
+		<delete dir="${instrumented.bindir}" />
+		<delete file="${basedir}/cobertura.ser" />
 
-		<ivy:cleancache/>
-    	<delete dir="${lib.dir}"  includeemptydirs="true" />
+		<ivy:cleancache />
+		<delete dir="${lib.dir}" includeemptydirs="true" />
 	</target>
-	
+
 	<!-- ================================= 
           target: javadoc              
          ================================= -->
-    <target name="javadoc" depends="compile" description="--> generate the javadoc documentation files">
-        <javadoc destdir="${doc.apidoc.dir}" windowTitle="Cornerstone"
-		   		author="true" version="true" use="true">
-			<classpath refid="project.classpath"/>
-        	<packageset dir="${src.dir}" defaultexcludes="yes">
-        	      <include name="org/timadorus/cornerstone/**"/>
-        	      <exclude name="org/timadorus/cornerstone/**/test/**"/>
-        	    </packageset>
-        	<doctitle><![CDATA[<h1>BookKeeper</h1>]]></doctitle>
-        	<bottom><![CDATA[<i>Copyright &#169; 2007-2009 Lutz Behnke. All Rights Reserved.</i>]]></bottom>
-        </javadoc>
-    </target>
+	<target name="javadoc" depends="compile" description="--> generate the javadoc documentation files">
+		<javadoc destdir="${doc.apidoc.dir}" windowTitle="Cornerstone" author="true" version="true" use="true">
+			<classpath refid="project.classpath" />
+			<packageset dir="${src.dir}" defaultexcludes="yes">
+				<include name="org/timadorus/cornerstone/**" />
+				<exclude name="org/timadorus/cornerstone/**/test/**" />
+			</packageset>
+			<doctitle>
+				<![CDATA[<h1>BookKeeper</h1>]]></doctitle>
+		<bottom>
+			<![CDATA[<i>Copyright &#169; 2007-2009 Lutz Behnke. All Rights Reserved.</i>]]></bottom>
+</javadoc>
+</target>
 
 
-	<target name="distjar"  description="Create a jar for the cornerstone project" depends="compile">
-	        <jar jarfile="cornerstone.jar" includes="**/*.class" excludes="**/*Test.class" basedir="${build.dir}">
-	        </jar>
-	    </target>
+<target name="distjar" description="Create a jar for the cornerstone project" depends="compile">
+<jar jarfile="cornerstone.jar" includes="**/*.class" excludes="**/*Test.class" basedir="${build.dir}">
+</jar>
+</target>
 
-	<target name="build" depends="resolve, test-checkstyle, test_java, distjar">
-	</target>
+<target name="build" depends="resolve, test-checkstyle, test_java, distjar">
+</target>
 </project>
