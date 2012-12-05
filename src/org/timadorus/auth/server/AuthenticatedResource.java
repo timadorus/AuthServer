@@ -24,7 +24,6 @@ import java.util.List;
 
 import javax.ws.rs.core.HttpHeaders;
 
-import org.timadorus.auth.AuthManager;
 
 /**
  * @author sage

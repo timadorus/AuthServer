@@ -17,12 +17,13 @@
  * MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
  */
 
-package org.timadorus.auth;
+package org.timadorus.auth.server;
 
 import java.security.Principal;
 import java.util.List;
 
 import javax.security.auth.login.CredentialException;
+
 
 /** interface for searching of subjects authorizing the access of a user to a subject.
  * 

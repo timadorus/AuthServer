@@ -20,11 +20,12 @@
  * MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
  */
 
-package org.timadorus.auth;
+package org.timadorus.auth.server;
 
 import java.security.Principal;
 
 import javax.security.auth.login.LoginException;
+
 
 
 /**

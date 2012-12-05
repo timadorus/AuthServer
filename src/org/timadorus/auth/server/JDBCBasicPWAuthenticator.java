@@ -17,7 +17,7 @@
  * MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
  */
 
-package org.timadorus.auth;
+package org.timadorus.auth.server;
 
 import java.security.Principal;
 import java.sql.Connection;
@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import javax.security.auth.login.LoginException;
+
 
 
 /**
@@ -222,7 +223,7 @@ public class JDBCBasicPWAuthenticator implements IdentityAuthenticator {
 
 
   /**
-   * @see org.timadorus.auth.IdentityAuthenticator#authenticateIdentity(org.timadorus.auth.IdentityCredentials)
+   * @see org.timadorus.auth.server.IdentityAuthenticator#authenticateIdentity(org.timadorus.auth.server.IdentityCredentials)
    *
    * @param credentials
    * @return

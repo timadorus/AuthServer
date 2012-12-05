@@ -32,7 +32,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.login.CredentialException;
 import javax.security.auth.login.LoginException;
 
-import org.timadorus.auth.Base64;
+import org.timadorus.auth.shared.Base64;
 
 import com.sun.sgs.auth.Identity;
 import com.sun.sgs.auth.IdentityAuthenticator;

@@ -17,9 +17,10 @@
  * MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
  */
 
-package org.timadorus.auth;
+package org.timadorus.auth.server;
 
 import javax.security.auth.login.LoginException;
+
 
 import com.sun.jersey.core.util.Base64;
 
@@ -49,7 +50,7 @@ public class BasicUserPasswordCredential implements IdentityCredentials {
   }
   
   /**
-   * @see org.timadorus.auth.IdentityCredentials#getCredentialsType()
+   * @see org.timadorus.auth.server.IdentityCredentials#getCredentialsType()
    *
    * @return
    */

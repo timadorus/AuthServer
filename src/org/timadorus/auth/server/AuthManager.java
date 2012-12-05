@@ -17,7 +17,7 @@
  * MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
  */
 
-package org.timadorus.auth;
+package org.timadorus.auth.server;
 
 import java.security.Principal;
 import java.util.ArrayList;
@@ -27,6 +27,7 @@ import java.util.Map;
 
 import javax.security.auth.login.CredentialException;
 import javax.security.auth.login.LoginException;
+
 
 
 

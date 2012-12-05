@@ -32,8 +32,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 
-import org.timadorus.auth.AuthManager;
-import org.timadorus.auth.Entity;
 
 /**
  * @author sage

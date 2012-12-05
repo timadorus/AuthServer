@@ -30,11 +30,7 @@ import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.timadorus.auth.AuthManager;
-import org.timadorus.auth.Identity;
-import org.timadorus.auth.JDBCBasicPWAuthenticator;
-import org.timadorus.auth.SimpleAuthorizer;
-import org.timadorus.auth.SimpleAuthorizer.SimpleEntity;
+import org.timadorus.auth.server.SimpleAuthorizer.SimpleEntity;
 
 import com.sun.grizzly.SSLConfig;
 import com.sun.grizzly.http.servlet.ServletAdapter;

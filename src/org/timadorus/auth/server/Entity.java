@@ -17,7 +17,7 @@
  * MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
  */
 
-package org.timadorus.auth;
+package org.timadorus.auth.server;
 
 /** Object that represents a target for authentication in the SGS game.
  * 

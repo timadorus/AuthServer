@@ -17,7 +17,7 @@
  * MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
  */
 
-package org.timadorus.auth;
+package org.timadorus.auth.server;
 
 import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
@@ -37,6 +37,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
+
 
 import com.sun.jersey.core.util.Base64;
 
@@ -72,7 +73,7 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
     }
 
     /**
-     * @see org.timadorus.auth.Entity#getName()
+     * @see org.timadorus.auth.server.Entity#getName()
      *
      * @return
      */
@@ -83,7 +84,7 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
 
     /**
      * 
-     * @see org.timadorus.auth.Entity#getIdentifier()
+     * @see org.timadorus.auth.server.Entity#getIdentifier()
      *
      * @return
      */
@@ -156,7 +157,7 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
   }
   
   /**
-   * @see org.timadorus.auth.SubjectAuthorizer#getAuthToken(org.timadorus.auth.Entity, java.security.Principal)
+   * @see org.timadorus.auth.server.SubjectAuthorizer#getAuthToken(org.timadorus.auth.server.Entity, java.security.Principal)
    *
    * returns a base64 encoded authenticator string, containing the current time as milliseconds since the epoch.
    * 
@@ -214,7 +215,7 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
   }
 
   /**
-   * @see org.timadorus.auth.SubjectAuthorizer#getEntities(java.security.Principal)
+   * @see org.timadorus.auth.server.SubjectAuthorizer#getEntities(java.security.Principal)
    *
    * @param princ
    * @return
@@ -225,7 +226,7 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
   }
 
   /**
-   * @see org.timadorus.auth.SubjectAuthorizer#getEntities(java.security.Principal, org.timadorus.auth.Entity)
+   * @see org.timadorus.auth.server.SubjectAuthorizer#getEntities(java.security.Principal, org.timadorus.auth.server.Entity)
    *
    * @param princ
    * @param parent
@@ -253,7 +254,7 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
   
   /**
    * 
-   * @see org.timadorus.auth.SubjectAuthorizer#getEntityByIdentifier(java.lang.String)
+   * @see org.timadorus.auth.server.SubjectAuthorizer#getEntityByIdentifier(java.lang.String)
    *
    * @param ident
    * @return
