@@ -264,8 +264,8 @@
 		<javadoc destdir="${doc.apidoc.dir}" windowTitle="Cornerstone" author="true" version="true" use="true">
 			<classpath refid="project.classpath" />
 			<packageset dir="${src.dir}" defaultexcludes="yes">
-				<include name="org/timadorus/cornerstone/**" />
-				<exclude name="org/timadorus/cornerstone/**/test/**" />
+				<include name="org/timadorus/auth/**" />
+				<exclude name="org/timadorus/auth/**/test/**" />
 			</packageset>
 			<doctitle>
 				<![CDATA[<h1>Timadorus Authentication Server</h1>]]>
@@ -278,10 +278,22 @@
 
 
 	<target name="distjar" description="Create the set of jars for the authentication server" depends="compile">
-		<jar jarfile="${basedir}/TimadorusAs-server.jar" basedir="${build.dir}">
-			<include name="**/*.class"/>
+		<jar jarfile="${basedir}/TimadorusAuthServer-server.jar" basedir="${build.dir}">
+			<include name="**/auth/server/*.class"/>
 		    <exclude name="**/*Test.class"/>
 		</jar>
+        <jar jarfile="${basedir}/TimadorusAuthServer-sgs.jar" basedir="${build.dir}">
+            <include name="**/auth/sgs/*.class"/>
+            <include name="**/auth/shared/*.class"/>
+            <exclude name="**/*Test.class"/>
+            <include name="**/etc/sgs-conf/*"/>
+        </jar>
+        <jar jarfile="${basedir}/TimadorusAuthServer-client.jar" basedir="${build.dir}">
+            <include name="**/auth/sgs/*.class"/>
+            <include name="**/auth/shared/*.class"/>
+            <exclude name="**/*Test.class"/>
+            <include name="**/etc/sgs-conf/*"/>
+        </jar>
 	</target>
 
 	<!-- ================================= 

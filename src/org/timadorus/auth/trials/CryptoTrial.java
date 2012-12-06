@@ -32,7 +32,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.timadorus.auth.shared.Base64;
+import org.timadorus.auth.sgs.Base64;
 
 /** Do some test with the crypto stuff
  * @author sage

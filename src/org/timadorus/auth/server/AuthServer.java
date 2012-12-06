@@ -48,7 +48,6 @@ public class AuthServer {
 
   private static final int DEFAULT_PORT = 9998;
   
-  protected Map<String, String> initParams =  new HashMap<String, String>();
   protected String host = "localhost";
   protected int port = DEFAULT_PORT;
   protected String truststorePath = "./";
@@ -162,10 +161,19 @@ public class AuthServer {
     
     }
     
-  public void start() throws IOException, URISyntaxException {
+  /** start the server.
+   * 
+   * @throws IOException
+   * @throws URISyntaxException 
+   * @throws IllegalStateException if the server secret has not been set.
+   */
+  public void start() throws IOException, URISyntaxException, IllegalStateException {
+    
+    if (serverKeySecret == null) { throw new IllegalStateException("server secret has not been set"); }
+    
+    Map<String, String> initParams =  new HashMap<String, String>();
 
     initParams.put("com.sun.jersey.config.property.packages", "org.timadorus.auth.server");
-
 
     threadSelector = createSelector(initParams);
   }    
@@ -217,4 +225,67 @@ public class AuthServer {
     System.out.println("Starting grizzly...");
     server.start();
   }
+
+
+  public int getPort() {
+    return port;
+  }
+
+
+  /**
+   * @return the host
+   */
+  public final String getHost() {
+    return host;
+  }
+
+
+  /**
+   * @param host the host to set
+   */
+  public final void setHost(String host) {
+    this.host = host;
+  }
+
+
+  /**
+   * @param port the port to set
+   */
+  public final void setPort(int port) {
+    this.port = port;
+  }
+
+
+  /**
+   * @return the serverKeySecret
+   */
+  public final String getServerKeySecret() {
+    return serverKeySecret;
+  }
+
+
+  /**
+   * @param serverKeySecret the serverKeySecret to set
+   */
+  public final void setServerKeySecret(String serverKeySecret) {
+    this.serverKeySecret = serverKeySecret;
+  }
+
+
+  /**
+   * @return the truststorePath
+   */
+  public final String getTruststorePath() {
+    return truststorePath;
+  }
+
+
+  /**
+   * @param truststorePath the truststorePath to set
+   */
+  public final void setTruststorePath(String truststorePath) {
+    this.truststorePath = truststorePath;
+  }
+  
+  
 }

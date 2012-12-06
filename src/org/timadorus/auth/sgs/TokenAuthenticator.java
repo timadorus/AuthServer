@@ -32,7 +32,6 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.login.CredentialException;
 import javax.security.auth.login.LoginException;
 
-import org.timadorus.auth.shared.Base64;
 
 import com.sun.sgs.auth.Identity;
 import com.sun.sgs.auth.IdentityAuthenticator;
@@ -86,8 +85,11 @@ public class TokenAuthenticator implements IdentityAuthenticator {
     final int kiloMult = 1000;
     
  // make sure that we were given the right type of credentials
+    if (credentials == null) {
+      throw new CredentialException("credentials must not be null");      
+    }
     if (!(credentials instanceof NamePasswordCredentials)) {
-        throw new CredentialException("unsupported credentials");
+      throw new CredentialException("unsupported credentials type: " + credentials.getCredentialsType());
     }
     NamePasswordCredentials creds = (NamePasswordCredentials) credentials;
 

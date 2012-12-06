@@ -1,4 +1,4 @@
-package org.timadorus.auth.shared;
+package org.timadorus.auth.sgs;
 
 // CHECKSTYLE OFF MagicNumber
 
