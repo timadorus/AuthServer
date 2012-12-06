@@ -27,6 +27,11 @@
 	<property name="doc.dir" value="${basedir}/doc" />
 	<property name="doc.apidoc.dir" value="${doc.dir}/apidoc" />
 
+	<property name="pub.version" value="0.1" />
+	<property name="pub.status" value="integration" />
+	<property name="pub.snapshot.resolver" value="timadorus-snapshot" />
+	<property name="pub.release.resolver" value="timadorus-release" />
+
 	<!-- Classpath definiton -->
 	<path id="compile.classpath">
 		<pathelement path="${java.class.path}/" />
@@ -44,13 +49,13 @@
 		</fileset>
 	</path>
 
-    <path id="runtime.classpath">
-        <pathelement path="${java.class.path}/" />
-        <fileset dir="${tool.dir}/testing">
-            <include name="**/*.jar" />
-            <include name="**/*.zip" />
-        </fileset>
-    </path>
+	<path id="runtime.classpath">
+		<pathelement path="${java.class.path}/" />
+		<fileset dir="${tool.dir}/testing">
+			<include name="**/*.jar" />
+			<include name="**/*.zip" />
+		</fileset>
+	</path>
 
 	<path id="project.classpath">
 		<path refid="runtime.classpath" />
@@ -91,7 +96,7 @@
 		<!-- Checkstyle -->
 		<taskdef resource="checkstyletask.properties" classpathref="testing.classpath" />
 
-		<taskdef resource="liquibasetasks.properties" classpathref="compile.classpath"/>
+		<taskdef resource="liquibasetasks.properties" classpathref="compile.classpath" />
 	</target>
 
 	<!-- ================================= 
@@ -163,19 +168,11 @@
           Will drop the whole database before starting!
                                 
          - - - - - - - - - - - - - - - - - -->
-    <target name="test-db-create" depends="resolve">
-    	<property name="dbName" value="jdbcDemoDB"/>
+	<target name="test-db-create" depends="resolve">
+		<property name="dbName" value="jdbcDemoDB" />
 
-         <updateDatabase
-         	    dropFirst="true"
-                changeLogFile="${src.dir}/org/timadorus/auth/server/db/changelog/db.changelog-master.xml"
-            	driver="org.apache.derby.jdbc.EmbeddedDriver"
-            	url="jdbc:derby:${dbName};create=true"
-         	    username="authserv"
-         	    password="ty32re8pu"
-         	    classpathref="compile.classpath"
-            />
-    </target>
+		<updateDatabase dropFirst="true" changeLogFile="${src.dir}/org/timadorus/auth/server/db/changelog/db.changelog-master.xml" driver="org.apache.derby.jdbc.EmbeddedDriver" url="jdbc:derby:${dbName};create=true" username="authserv" password="ty32re8pu" classpathref="compile.classpath" />
+	</target>
 
 	<!-- ================================= 
           target: test_java              
@@ -270,50 +267,52 @@
 			<doctitle>
 				<![CDATA[<h1>Timadorus Authentication Server</h1>]]>
 			</doctitle>
-			<bottom>
-				<![CDATA[<i>Copyright &#169; 2007-2012 Timadorus Project. All Rights Reserved.</i>]]>
+		<bottom>
+			<![CDATA[<i>Copyright &#169; 2007-2012 Timadorus Project. All Rights Reserved.</i>]]>
 			</bottom>
-		</javadoc>
-	</target>
+</javadoc>
+</target>
 
 
-	<target name="distjar" description="Create the set of jars for the authentication server" depends="compile">
-		<jar jarfile="${basedir}/TimadorusAuthServer-server.jar" basedir="${build.dir}">
-			<include name="**/auth/server/*.class"/>
-		    <exclude name="**/*Test.class"/>
-		</jar>
-        <jar jarfile="${basedir}/TimadorusAuthServer-sgs.jar" basedir="${build.dir}">
-            <include name="**/auth/sgs/*.class"/>
-            <include name="**/auth/shared/*.class"/>
-            <exclude name="**/*Test.class"/>
-            <include name="**/etc/sgs-conf/*"/>
-        </jar>
-        <jar jarfile="${basedir}/TimadorusAuthServer-client.jar" basedir="${build.dir}">
-            <include name="**/auth/sgs/*.class"/>
-            <include name="**/auth/shared/*.class"/>
-            <exclude name="**/*Test.class"/>
-            <include name="**/etc/sgs-conf/*"/>
-        </jar>
-	</target>
+<target name="distjar" description="Create the set of jars for the authentication server" depends="compile">
+<jar jarfile="${basedir}/auth-server.jar" basedir="${build.dir}">
+	<include name="**/auth/server/*.class" />
+	<exclude name="**/*Test.class" />
+</jar>
+<jar jarfile="${basedir}/auth-server-sgs.jar" basedir="${build.dir}">
+	<include name="**/auth/sgs/*.class" />
+	<include name="**/auth/shared/*.class" />
+	<exclude name="**/*Test.class" />
+	<include name="**/etc/sgs-conf/*" />
+</jar>
+<jar jarfile="${basedir}/auth-server-client.jar" basedir="${build.dir}">
+	<include name="**/auth/sgs/*.class" />
+	<include name="**/auth/shared/*.class" />
+	<exclude name="**/*Test.class" />
+	<include name="**/etc/sgs-conf/*" />
+</jar>
+</target>
 
-	<!-- ================================= 
+<!-- ================================= 
 	          target: publish snapshot
      ================================= -->
-	<target name="publish" depends="javadoc, distjar" description="Publish this build into repository">
-		<ivy:publish pubrevision="${pub.version}-SNAPSHOT" status="${pub.status}" resolver="${pub.snapshot.resolver}" overwrite="true" update="true">
-			<artifacts pattern="${build.dir}/[artifact].[ext]" />
-		</ivy:publish>
-	</target>
+<target name="publish" depends="javadoc, distjar" description="Publish this build into repository">
+<ivy:publish pubrevision="${pub.version}-SNAPSHOT" status="${pub.status}" resolver="${pub.snapshot.resolver}" overwrite="true" update="true">
+	<artifacts pattern="${build.dir}/[artifact].[ext]" />
+</ivy:publish>
+</target>
 
-	<!-- ================================= 
+<!-- ================================= 
 	          target: publish release  
      ================================= -->
-	<target name="publish-release" depends="javadoc, distjar" description="Publish this build into repository">
-		<ivy:publish pubrevision="${pub.version}" status="${pub.status}" resolver="${pub.release.resolver}" overwrite="true">
-			<artifacts pattern="${build.dir}/[artifact].[ext]" />
-		</ivy:publish>
-	</target>
+<target name="publish-release" depends="javadoc, distjar" description="Publish this build into repository">
+<ivy:publish pubrevision="${pub.version}" status="${pub.status}" resolver="${pub.release.resolver}" overwrite="true">
+	<artifacts pattern="${build.dir}/[artifact].[ext]" />
+</ivy:publish>
+</target>
 
-	<target name="build" depends="resolve, test-checkstyle, test_java, distjar, publish">
-	</target>
+<!--    <target name="build" depends="resolve, test-checkstyle, test_java, distjar, publish" />
+    Publishing is not properly configured right now!! 
+-->
+<target name="build" depends="resolve, test-checkstyle, test_java, distjar" />
 </project>
