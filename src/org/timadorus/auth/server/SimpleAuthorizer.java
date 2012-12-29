@@ -46,275 +46,283 @@ import com.sun.jersey.core.util.Base64;
  */
 public class SimpleAuthorizer implements SubjectAuthorizer {
 
-	/**
-	 * default length of AES keys in bits
-	 * 
-	 */
-	protected static final int DEFAULT_KEY_LENGTH = 128;
+    /**
+     * default length of AES keys in bits
+     * 
+     */
+    protected static final int DEFAULT_KEY_LENGTH = 128;
 
-	/**
-	 * @author sage
-	 * 
-	 */
-	public class SimpleEntity implements Entity {
+    /**
+     * @author sage
+     * 
+     */
+    public class SimpleEntity implements Entity {
 
-		String name;
-		SimpleEntity parent;
-		Map<String, Entity> children = new HashMap<String, Entity>();
+        String name;
+        SimpleEntity parent;
+        Map<String, Entity> children = new HashMap<String, Entity>();
 
-		public SimpleEntity(String name, SimpleEntity parent) {
-			this.name = name;
-			this.parent = parent;
-			if (parent != null) {
-				parent.children.put(name, parent);
-			}
-		}
+        public SimpleEntity(String name, SimpleEntity parent) {
+            this.name = name;
+            this.parent = parent;
+            if (parent != null) {
+                parent.children.put(name, parent);
+            }
+        }
 
-		/**
-		 * @see org.timadorus.auth.server.Entity#getName()
-		 * 
-		 * @return
-		 */
-		@Override
-		public String getLabel() {
-			return name;
-		}
+        /**
+         * @see org.timadorus.auth.server.Entity#getName()
+         * 
+         * @return
+         */
+        @Override
+        public String getLabel() {
+            return name;
+        }
 
-		/**
-		 * 
-		 * @see org.timadorus.auth.server.Entity#getIdentifier()
-		 * 
-		 * @return
-		 */
-		@Override
-		public String getIdentifier() {
+        /**
+         * 
+         * @see org.timadorus.auth.server.Entity#getIdentifier()
+         * 
+         * @return
+         */
+        @Override
+        public String getIdentifier() {
 
-			if (parent == null) {
-				return name;
-			}
+            if (parent == null) {
+                return name;
+            }
 
-			String parentId = parent.getIdentifier();
-			if (parentId == null) {
-				return name;
-			}
+            String parentId = parent.getIdentifier();
+            if (parentId == null) {
+                return name;
+            }
 
-			StringBuilder retval = new StringBuilder(parentId);
-			retval.append(":").append(name);
+            StringBuilder retval = new StringBuilder(parentId);
+            retval.append(":").append(name);
 
-			return retval.toString();
-		}
+            return retval.toString();
+        }
 
-		/**
-		 * @see java.lang.Object#equals(java.lang.Object)
-		 * 
-		 * @param obj
-		 * @return
-		 */
-		@Override
-		public boolean equals(Object obj) {
-			if (!(obj instanceof SimpleEntity)) {
-				return false;
-			}
-			SimpleEntity se = (SimpleEntity) obj;
+        /**
+         * @see java.lang.Object#equals(java.lang.Object)
+         * 
+         * @param obj
+         * @return
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof SimpleEntity)) {
+                return false;
+            }
+            SimpleEntity se = (SimpleEntity) obj;
 
-			return (name == null) ? se.name == null : name.equals(se.name);
+            return (name == null) ? se.name == null : name.equals(se.name);
 
-		}
+        }
 
-		/**
-		 * @see java.lang.Object#hashCode()
-		 * 
-		 * @return
-		 */
-		@Override
-		public int hashCode() {
-			return name.hashCode();
-		}
+        /**
+         * @see java.lang.Object#hashCode()
+         * 
+         * @return
+         */
+        @Override
+        public int hashCode() {
+            return name.hashCode();
+        }
 
-		@Override
-		public boolean isLeaf() {
-			return (children.size() == 0);
-		}
+        @Override
+        public boolean isLeaf() {
+            return (children.size() == 0);
+        }
 
-	}
+    }
 
-	protected Map<Principal, List<SimpleEntity>> entitiesPerPrincipal = new HashMap<Principal, List<SimpleEntity>>();
+    protected Map<Principal, List<SimpleEntity>> entitiesPerPrincipal = new HashMap<Principal, List<SimpleEntity>>();
 
-	protected SimpleEntity treeRoot = new SimpleEntity(null, null);
+    protected SimpleEntity treeRoot = new SimpleEntity(null, null);
 
-	private byte[] keyData = null;
+    private byte[] keyData = null;
 
-	private Charset charset = Charset.forName("latin1");
+    private Charset charset = Charset.forName("latin1");
 
-	/**
-	 * set the secret shared with the game server
-	 * 
-	 */
-	public void setSharedSecret(String data) {
-		final int bitsPerByte = 8;
+    private final int aes_block_size = 16;
 
-		if (data.length() != (DEFAULT_KEY_LENGTH / bitsPerByte)) {
-			throw new InvalidParameterException("Key lenght must be "
-					+ (DEFAULT_KEY_LENGTH / bitsPerByte) + " bytes");
-		}
-		keyData = data.getBytes();
-	}
+    /**
+     * set the secret shared with the game server
+     * 
+     */
+    public void setSharedSecret(String data) {
+        final int bitsPerByte = 8;
 
-	/**
-	 * returns a base64 encoded authenticator string, containing the current
-	 * time as milliseconds since the epoch.
-	 * 
-	 * TODO: This is a design weakness: a crypto-attacker could guess the first
-	 * 5-6 Bytes of the message.
-	 * 
-	 * @param entity
-	 * @param princ
-	 * @return
-	 * @throws IllegalArgumentException
-	 *             if the key data has not been set.
-	 */
-	@Override
-  public String getAuthToken(Principal princ, Entity entity) {
+        if (data.length() != (DEFAULT_KEY_LENGTH / bitsPerByte)) {
+            throw new InvalidParameterException("Key lenght must be "
+                    + (DEFAULT_KEY_LENGTH / bitsPerByte) + " bytes");
+        }
+        keyData = data.getBytes();
+    }
 
-	byte[] retval = null;
-	
-	try {
-		KeyGenerator kgen = KeyGenerator.getInstance("AES");
-		kgen.init(DEFAULT_KEY_LENGTH); // 192 and 256 bits may not be available
-		
-		if (keyData == null) { throw new IllegalArgumentException("Key data not set"); } 
-		
-		SecretKeySpec keySpec = new SecretKeySpec(keyData, "AES");      
-		
-		Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");      
-		cipher.init(Cipher.ENCRYPT_MODE, keySpec);
-	
-		byte[] timeBytes = Long.toString(new Date().getTime()).getBytes(charset);
-		byte[] ident = entity.getIdentifier().getBytes(charset);
+    /**
+     * returns a base64 encoded authenticator string, containing the current
+     * time as milliseconds since the epoch.
+     * 
+     * TODO: This is a design weakness: a crypto-attacker could guess the first
+     * 5-6 Bytes of the message.
+     * 
+     * @param entity
+     * @param princ
+     * @return
+     * @throws IllegalArgumentException
+     *             if the key data has not been set.
+     */
+    @Override
+    public String getAuthToken(Principal princ, Entity entity) {
 
-		// calculate input array length as it has to be a multiple of 16
-		int rawLength = timeBytes.length+ident.length;
-		int inputLength = (rawLength%16 == 0) ? rawLength : rawLength+16-rawLength%16;
-		
-		byte[] input = new byte[inputLength];
-		System.arraycopy(timeBytes, 0, input, 0, timeBytes.length);
-		System.arraycopy(ident, 0, input, timeBytes.length, ident.length);
-			
-		System.out.println("orig string: '" + Arrays.toString(input) + "'");
-      
-		byte[] encryptedContent = cipher.doFinal(input);
-      
-		// get initialization vector and prepend it to the encrypted content
-		byte[] iv=cipher.getIV();
-		retval=new byte[iv.length + encryptedContent.length];
-		System.arraycopy(iv, 0, retval, 0, iv.length);
-		System.arraycopy(encryptedContent, 0, retval, iv.length, encryptedContent.length);
-      
-    } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace();
-    } catch (NoSuchPaddingException e) {
-      e.printStackTrace();
-    } catch (InvalidKeyException e) {
-      e.printStackTrace();
-    } catch (IllegalBlockSizeException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (BadPaddingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } 
-    
-    return new String(Base64.encode(retval));
-  }
+        byte[] retval = null;
 
-	/**
-	 * @see org.timadorus.auth.server.SubjectAuthorizer#getEntities(java.security.Principal)
-	 * 
-	 * @param princ
-	 * @return
-	 */
-	@Override
-	public List<Entity> getEntities(Principal princ) {
-		return getEntities(princ, null);
-	}
+        try {
+            KeyGenerator kgen = KeyGenerator.getInstance("AES");
+            kgen.init(DEFAULT_KEY_LENGTH); // 192 and 256 bits may not be
+                                           // available
 
-	@Override
-	public List<Entity> getEntities(Principal princ, Entity parent) {
-		List<SimpleEntity> candidate = entitiesPerPrincipal.get(princ);
-		if (candidate == null) {
-			return new ArrayList<Entity>();
-		}
+            if (keyData == null) {
+                throw new IllegalArgumentException("Key data not set");
+            }
 
-		List<Entity> retlist = new ArrayList<Entity>();
-		if (parent == null) {
-			parent = treeRoot;
-		} // handle for root of entities
+            SecretKeySpec keySpec = new SecretKeySpec(keyData, "AES");
 
-		// filter for parent
-		for (SimpleEntity entity : candidate) {
-			if (entity.parent.equals(parent)) {
-				retlist.add(entity);
-			}
-		}
+            Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec);
 
-		return retlist;
-	}
+            byte[] timeBytes = Long.toString(new Date().getTime()).getBytes(
+                    charset);
+            byte[] ident = entity.getIdentifier().getBytes(charset);
 
-	/**
-	 * 
-	 * @see org.timadorus.auth.server.SubjectAuthorizer#getEntityByIdentifier(java.lang.String)
-	 * 
-	 * @param ident
-	 * @return
-	 */
-	@Override
-	public Entity getEntityByIdentifier(String identPath)
-			throws IllegalArgumentException {
-		if (identPath == null) {
-			return null;
-		}
+            // calculate input array length as it has to be a multiple of 16
+            int rawLength = timeBytes.length + ident.length;
+            int inputLength = (rawLength % 16 == 0) ? rawLength : rawLength
+                    + aes_block_size - rawLength % aes_block_size;
 
-		SimpleEntity parent = treeRoot;
-		String[] idents = identPath.split(":");
-		for (String ident : idents) {
+            byte[] input = new byte[inputLength];
+            System.arraycopy(timeBytes, 0, input, 0, timeBytes.length);
+            System.arraycopy(ident, 0, input, timeBytes.length, ident.length);
 
-			parent = new SimpleEntity(ident, parent);
-		}
-		return parent;
-	}
+            System.out.println("orig string: '" + Arrays.toString(input) + "'");
 
-	/**
-	 * 
-	 * @param entity
-	 */
-	public void addEntity(Principal princ, SimpleEntity entity)
-			throws IllegalArgumentException {
+            byte[] encryptedContent = cipher.doFinal(input);
 
-		List<SimpleEntity> entList = entitiesPerPrincipal.get(princ);
-		if (entList == null) {
-			entList = new ArrayList<SimpleEntity>();
-			entitiesPerPrincipal.put(princ, entList);
-		}
-		entList.add(entity);
+            // get initialization vector and prepend it to the encrypted content
+            byte[] iv = cipher.getIV();
+            retval = new byte[iv.length + encryptedContent.length];
+            System.arraycopy(iv, 0, retval, 0, iv.length);
+            System.arraycopy(encryptedContent, 0, retval, iv.length,
+                    encryptedContent.length);
 
-	}
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
-	/**
-	 * create a new entity.
-	 * 
-	 * this is an insert action, while getEntityByIdentifier() will only read
-	 * existing entries.
-	 * 
-	 * @param name
-	 * @param parent
-	 */
-	public SimpleEntity createEntity(String name, SimpleEntity parent) {
-		if (parent == null) {
-			parent = treeRoot;
-		}
-		SimpleEntity retval = new SimpleEntity(name, parent);
+        return new String(Base64.encode(retval));
+    }
 
-		return retval;
-	}
+    /**
+     * @see org.timadorus.auth.server.SubjectAuthorizer#getEntities(java.security.Principal)
+     * 
+     * @param princ
+     * @return
+     */
+    @Override
+    public List<Entity> getEntities(Principal princ) {
+        return getEntities(princ, null);
+    }
+
+    @Override
+    public List<Entity> getEntities(Principal princ, Entity parent) {
+        List<SimpleEntity> candidate = entitiesPerPrincipal.get(princ);
+        if (candidate == null) {
+            return new ArrayList<Entity>();
+        }
+
+        List<Entity> retlist = new ArrayList<Entity>();
+        if (parent == null) {
+            parent = treeRoot;
+        } // handle for root of entities
+
+        // filter for parent
+        for (SimpleEntity entity : candidate) {
+            if (entity.parent.equals(parent)) {
+                retlist.add(entity);
+            }
+        }
+
+        return retlist;
+    }
+
+    /**
+     * 
+     * @see org.timadorus.auth.server.SubjectAuthorizer#getEntityByIdentifier(java.lang.String)
+     * 
+     * @param ident
+     * @return
+     */
+    @Override
+    public Entity getEntityByIdentifier(String identPath)
+            throws IllegalArgumentException {
+        if (identPath == null) {
+            return null;
+        }
+
+        SimpleEntity parent = treeRoot;
+        String[] idents = identPath.split(":");
+        for (String ident : idents) {
+
+            parent = new SimpleEntity(ident, parent);
+        }
+        return parent;
+    }
+
+    /**
+     * 
+     * @param entity
+     */
+    public void addEntity(Principal princ, SimpleEntity entity)
+            throws IllegalArgumentException {
+
+        List<SimpleEntity> entList = entitiesPerPrincipal.get(princ);
+        if (entList == null) {
+            entList = new ArrayList<SimpleEntity>();
+            entitiesPerPrincipal.put(princ, entList);
+        }
+        entList.add(entity);
+
+    }
+
+    /**
+     * create a new entity.
+     * 
+     * this is an insert action, while getEntityByIdentifier() will only read
+     * existing entries.
+     * 
+     * @param name
+     * @param parent
+     */
+    public SimpleEntity createEntity(String name, SimpleEntity parent) {
+        if (parent == null) {
+            parent = treeRoot;
+        }
+        SimpleEntity retval = new SimpleEntity(name, parent);
+
+        return retval;
+    }
 
 }
