@@ -51,6 +51,12 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
      * 
      */
     protected static final int DEFAULT_KEY_LENGTH = 128;
+    
+    /**
+     * default block size for AES encryption
+     * 
+     */
+    protected static final int AES_BLOCK_SIZE = 16;
 
     /**
      * @author sage
@@ -146,8 +152,6 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
 
     private Charset charset = Charset.forName("latin1");
 
-    private final int aes_block_size = 16;
-
     /**
      * set the secret shared with the game server
      * 
@@ -200,8 +204,8 @@ public class SimpleAuthorizer implements SubjectAuthorizer {
 
             // calculate input array length as it has to be a multiple of 16
             int rawLength = timeBytes.length + ident.length;
-            int inputLength = (rawLength % 16 == 0) ? rawLength : rawLength
-                    + aes_block_size - rawLength % aes_block_size;
+            int inputLength = (rawLength % AES_BLOCK_SIZE == 0) ? rawLength : rawLength
+                    + AES_BLOCK_SIZE - rawLength % AES_BLOCK_SIZE;
 
             byte[] input = new byte[inputLength];
             System.arraycopy(timeBytes, 0, input, 0, timeBytes.length);
