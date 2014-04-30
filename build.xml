@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Ant build file -->
-<project default="main" name="auth-server-light" basedir="."
+<project default="build" name="TimadorusAuthServer" basedir="."
 	xmlns:ivy="antlib:org.apache.ivy.ant">
   <!-- Set up properties -->
   <property name="build.dir" value="${basedir}/bin" />
@@ -165,5 +165,5 @@
   	</ivy:publish>
   </target>
 
-  <target name="main" depends="clean,resolve,jar" />
+  <target name="build" depends="clean,resolve,jar" />
 </project>
