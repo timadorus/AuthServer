@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!-- Auth-server configuration File. -->
+<properties>
+  <!-- ************************************* -->
+  <!-- ********* NETWORK SETTINGS ********** -->
+  <!-- ************************************* -->
+  <!-- The port on which the server is listening. The default port is 50001. -->
+  <entry key="listenPort">50001</entry>
+  <!-- The network interface to bind the server to. If this is omitted, the
+    server will listen for connections on all of its interfaces. -->
+<!--  <entry key="networkInterface">192.168.247.1</entry>  -->
+  
+  <!-- ************************************* -->
+  <!-- ********* DATABASE SETTINGS ********* -->
+  <!-- ************************************* -->
+  <!-- The classname of the database driver to use.
+    Examples:
+      For embedded Derby:    org.apache.derby.jdbc.EmbeddedDriver
+      For traditional Derby: org.apache.derby.jdbc.ClientDriver
+   -->
+  <entry key="dbDriverClassName">org.apache.derby.jdbc.EmbeddedDriver</entry>
+  <!-- The connection-string for connecting to the auth database. Note that
+     the & character must be encoded as &amp;
+  -->
+  <entry key="dbConnectionString">
+    jdbc:derby:auth-database;create=true
+  </entry>
+  <!-- The prefix, if any, of the database tables. -->
+  <entry key="dbTablePrefix">users</entry>
+  
+  <!-- ************************************* -->
+  <!-- ********* KEYSTORE SETTINGS ********* -->
+  <!-- ************************************* -->
+  <!-- The file containing the key-store to use for the SSL server; A
+     key-store can be generated with the 'keytool' utility which is
+     included with Java.
+  -->
+  <entry key="keyStoreFile">
+    C:\Users\abc\workspace\AuthLight\etc\server
+  </entry>
+  <!-- The password for the key-store. -->
+  <entry key="keyStorePassword">123456</entry>
+  <!-- The file containing the trust-store to use for the SSL server; A
+     trust-store can be generated with the 'keytool' utility which is
+     included with Java.
+  -->
+  <entry key="trustStoreFile">
+    C:\Users\abc\workspace\AuthLight\etc\cacerts
+  </entry>
+  
+  <!-- ************************************* -->
+  <!-- *********** OTHER SETTINGS ********** -->
+  <!-- ************************************* -->
+  <!-- The secret-key that is shared with the gameserver for encrypting
+     and decrypting auth-tokens.
+   -->
+  <entry key="sharedSecretKey">
+    SuperGeheim
+  </entry>
+  <!--  The path to the logging.properties file. If this setting is omitted,
+    the logging.properties file path can also be set by specifying it as a
+    system property (-Djava.util.logging.config.file) when starting the
+    application. -->
+  <entry key="loggingFile">
+    ./logging.properties
+  </entry>
+</properties>

@@ -1,7 +1,3 @@
-/dictionary.dict
 /lib
-/test-results
-/instrumented.bin
-/coverage
-/jacoco.exec
-/jdbcDemoDB
+/release
+/bin

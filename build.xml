@@ -1,318 +1,169 @@
-<?xml version="1.0"?>
-<project name="TimadorusAuthServer" default="build" basedir="." xmlns="antlib:org.apache.tools.ant" xmlns:ivy="antlib:org.apache.ivy.ant" xmlns:jacoco="antlib:org.jacoco.ant">
-
-	<property name="release.version" value="0.1.0" />
-
-	<property name="build.dir" value="${basedir}/bin" />
-	<property name="src.dir" value="${basedir}/src" />
-
-	<property name="lib.dir" value="${basedir}/lib" />
-	<property name="tool.dir" value="${basedir}/lib" />
-
-	<property name="test-src.dir" value="${basedir}/test-src" />
-	<property name="src.resources" value="${basedir}/resources" />
-
-	<property name="ivy.dir" value="${basedir}/ivy" />
-	<property name="ivy.settings.file" value="${ivy.dir}/ivysettings.xml" />
-	<property name="ivy.cache.dir" value="${ivy.dir}/cache" />
-
-	<property name="build.lib" value="${build.dir}/lib" />
-	<property name="build.resources" value="${build.dir}/resources" />
-	<property name="build.sources" value="${build.dir}/build_src" />
-
-	<property name="instrumented.bindir" value="${basedir}/instrumented.bin" />
-	<property name="coverage.dir" value="${basedir}/coverage" />
-	<property name="test-report.dir" value="${basedir}/test-results" />
-
-	<property name="doc.dir" value="${basedir}/doc" />
-	<property name="doc.apidoc.dir" value="${doc.dir}/apidoc" />
-
-	<property name="pub.version" value="0.1" />
-	<property name="pub.status" value="integration" />
-	<property name="pub.snapshot.resolver" value="timadorus-snapshot" />
-	<property name="pub.release.resolver" value="timadorus-release" />
-
-	<!-- Classpath definiton -->
-	<path id="compile.classpath">
-		<pathelement path="${java.class.path}/" />
-		<fileset dir="${tool.dir}/compile">
-			<include name="**/*.jar" />
-			<include name="**/*.zip" />
-		</fileset>
-	</path>
-
-	<path id="testing.classpath">
-		<pathelement path="${java.class.path}/" />
-		<fileset dir="${tool.dir}/testing">
-			<include name="**/*.jar" />
-			<include name="**/*.zip" />
-		</fileset>
-	</path>
-
-	<path id="runtime.classpath">
-		<pathelement path="${java.class.path}/" />
-		<fileset dir="${tool.dir}/testing">
-			<include name="**/*.jar" />
-			<include name="**/*.zip" />
-		</fileset>
-	</path>
-
-	<path id="project.classpath">
-		<path refid="runtime.classpath" />
-		<fileset dir="${build.dir}">
-			<include name="**/*.jar" />
-			<include name="**/*.zip" />
-		</fileset>
-		<pathelement path="${build.dir}" />
-	</path>
-
-
-	<patternset id="meta.files">
-		<include name="**/*.xml" />
-		<include name="**/*.properties" />
-		<include name="**/*.txt" />
-		<include name="**/*.list" />
-	</patternset>
-
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ant build file -->
+<project default="main" name="auth-server-light" basedir="."
+	xmlns:ivy="antlib:org.apache.ivy.ant">
+  <!-- Set up properties -->
+  <property name="build.dir" value="${basedir}/bin" />
+  <property name="src.dir" value="${basedir}/src" />
+  <property name="test-src.dir" value="${basedir}/test-src" />
+  <property name="lib.dir" value="${basedir}/lib" />
+  <property name="doc.dir" value="${basedir}/doc" />
+  <property name="release.dir" value="${basedir}/release" />
+  <property name="example.dir" value="${release.dir}/example" />
+  <property name="ivy.resolve" value="${basedir}/resources/ivy.xml" />
+  <property name="ivy.settings" value="${basedir}/resources/ivysettings.xml" />
+  <property name="pub.version" value="0.1" />
+  <property name="pub.status" value="integration" />
+  <property name="pub.release.resolver" value="timadorus-release" />
+  
+  <path id="classpath">
+    <fileset dir="${lib.dir}" includes="**/*.jar" />
+  </path>
+	
 	<!-- ================================= 
-	          target: resolve
-	     
-	     let ivy handle depencies to other projects                   
+	       target: resolve
 	     ================================= -->
 	<target name="resolve" description="--> retrieve dependencies with ivy">
-		<ivy:settings file="${ivy.settings.file}" />
-		<ivy:resolve />
+		<ivy:settings file="${ivy.settings}" />
+		<ivy:resolve file="${ivy.resolve}" />
 		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true" />
-		<ivy:report todir="${ivy.dir}/reports" />
-
-		<!-- after (hopefully) retrieving all dependencies, add the tasks -->
-
-		<!-- JaCoCo -->
-		<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml" classpathref="testing.classpath" />
-
-		<!-- JUnit -->
-		<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask" classpathref="testing.classpath" />
-
-		<!-- Checkstyle -->
-		<taskdef resource="checkstyletask.properties" classpathref="testing.classpath" />
-
-		<taskdef resource="liquibasetasks.properties" classpathref="compile.classpath" />
 	</target>
+  
+  <!-- ================================= 
+          target: clean
+       ================================= -->
+  <target name="clean">
+    <delete dir="${build.dir}" />
+    <delete dir="${release.dir}" />
+  </target>
+  
+  <!-- ================================= 
+          target: compile
+       ================================= -->
+  <target name="compile">
+    <mkdir dir="${build.dir}" />
+    <javac srcdir="${src.dir}" destdir="${build.dir}"
+      classpathref="classpath" includeantruntime="false" />
+    <javac srcdir="${test-src.dir}" destdir="${build.dir}"
+      classpathref="classpath" includeantruntime="false" />
+  </target>
+  
+  <!-- ================================= 
+          target: release
+       ================================= -->
+  <target name="release">
+    <mkdir dir="${release.dir}" />
+    <copy todir="${release.dir}">
+      <fileset dir="${src.dir}/org/timadorus/auth/server">
+        <include name="server-config.xml" />
+      	<include name="logging.properties" />
+      </fileset>
+    </copy>
+    <mkdir dir="${example.dir}" />
+  	<mkdir dir="${release.dir}/lib" />
+  	<copy todir="${release.dir}/lib">
+  	  <fileset dir="${lib.dir}"/>
+  	</copy>
+  	<mkdir dir="${release.dir}/doc" />
+  	<copy todir="${release.dir}/doc">
+  	  <fileset dir="${doc.dir}"/>
+  	</copy>
+  </target>
+  
+  <!-- ================================= 
+          target: jar-server
+       ================================= -->
 
-	<!-- ================================= 
-          target: prep-dirs             
-         ================================= -->
-	<target name="prep-dirs" description="--> set directories, basic files, etc.">
-		<mkdir dir="${build.dir}" />
-		<mkdir dir="${instrumented.bindir}" />
-		<mkdir dir="${test-report.dir}" />
-		<mkdir dir="${coverage.dir}" />
-	</target>
-
-	<!-- ================================= 
-          target: compile              
-         ================================= -->
-	<target name="compile" depends="prep-dirs">
-		<javac srcdir="${src.dir}" destdir="${build.dir}" debug="on" includeAntRuntime="false">
-			<classpath refid="compile.classpath" />
-		</javac>
-		<javac srcdir="${test-src.dir}" destdir="${build.dir}" debug="on" includeAntRuntime="false">
-			<classpath refid="project.classpath" />
-		</javac>
-	</target>
-
-	<!-- - - - - - - - - - - - - - - - - - 
-          target: tas-server.jar          
-         - - - - - - - - - - - - - - - - - -->
-	<target name="tas-server.jar" depends="compile">
-		<copy todir="${build.dir}/META-INF">
-			<fileset dir="${basedir}/META-INF" />
-		</copy>
-		<jar destfile="${basedir}/tas-server-${release.version}.jar" basedir="${build.dir}">
-			<include name="org/timadorus/auth/*.class" />
-			<include name="org/timadorus/auth/server/*.class" />
-			<include name="META-INF/**/*" />
-		</jar>
-	</target>
-
-	<!-- - - - - - - - - - - - - - - - - - 
-          target: tas-client.jar          
-         - - - - - - - - - - - - - - - - - -->
-	<target name="tas-client.jar" depends="compile">
-		<copy todir="${build.dir}/META-INF">
-			<fileset dir="${basedir}/META-INF" />
-		</copy>
-		<jar destfile="${basedir}/tas-client-${release.version}.jar" basedir="${build.dir}">
-			<include name="org/timadorus/auth/client/*.class" />
-			<include name="META-INF/**/*" />
-		</jar>
-	</target>
-
-	<!-- - - - - - - - - - - - - - - - - - 
-          target: tas-sgs-authenticator.jar          
-         - - - - - - - - - - - - - - - - - -->
-	<target name="tas-sgs-authenticator.jar" depends="compile">
-		<copy todir="${build.dir}/META-INF">
-			<fileset dir="${basedir}/META-INF" />
-		</copy>
-		<jar destfile="${basedir}/tas-sgs-authenticator-${release.version}.jar" basedir="${build.dir}">
-			<include name="org/timadorus/auth/sgs/*.class" />
-			<!-- <include name="META-INF/**/*"/> -->
-		</jar>
-	</target>
-
-	<!-- - - - - - - - - - - - - - - - - - 
-          target: test-db-create
-          !!! only used for testing !!! 
+  <target name="jar-server" depends="tests">
+  	<!-- Create the value to use for the Class-Path entry in the Jar's manifest -->
+    <manifestclasspath property="manifest_cp" jarfile="auth-server.jar">
+         <classpath refid="classpath" />
+     </manifestclasspath>
+    <jar destfile="${release.dir}/auth-server.jar" basedir="${build.dir}">
+      <manifest>
+        <attribute name="Main-Class" value="org.timadorus.auth.server.Program" />
+        <attribute name="Class-Path" value="${manifest_cp}"/>
+      </manifest>
+      <include name="org/timadorus/auth/server/*.class" />
+      <include name="org/timadorus/auth/util/*.class" />
+    </jar>
+  </target>
+  
+  <!-- ================================= 
+          target: jar-client-lib
+       ================================= -->
+  <target name="jar-client-lib" depends="tests">
+    <jar destfile="${release.dir}/auth-client-lib.jar" basedir="${build.dir}">
+      <!-- client-lib uses the Base64-decoder of apach commons codec -->
+      <zipgroupfileset dir="${lib.dir}/default" includes="commons-codec-*.jar" />
+      <include name="org/timadorus/auth/client/*.class" />
+      <include name="org/timadorus/auth/util/*.class" />
+    </jar>
+  </target>
+  
+  <!-- ================================= 
+          target: jar-example-client
+       ================================= -->
+  <target name="jar-example-client" depends="tests">
+    <jar destfile="${example.dir}/example-client.jar" basedir="${build.dir}">
+      <zipgroupfileset dir="${lib.dir}/default" includes="commons-codec-*.jar" />
+      <include name="org/timadorus/auth/client/*.class" />
+      <include name="org/timadorus/auth/util/*.class" />
+      <include name="org/timadorus/auth/example/client/*.class" />
+      <manifest>
+        <attribute name="Main-Class" value="org.timadorus.auth.example.client.Program" />
+      </manifest>
+    </jar>
+  </target>
+  
+  <!-- ================================= 
+          target: jar-example-gameserver
+       ================================= -->
+  <target name="jar-example-gameserver" depends="tests">
+    <jar destfile="${example.dir}/example-gameserver.jar" basedir="${build.dir}">
+      <zipgroupfileset dir="${lib.dir}/default" includes="commons-codec-*.jar" />
+      <include name="org/timadorus/auth/util/*.class" />
+      <include name="org/timadorus/auth/example/gameserver/*.class" />
+      <manifest>
+        <attribute name="Main-Class" value="org.timadorus.auth.example.gameserver.Program" />
+      </manifest>
+    </jar>
+  </target>
+  
+  <!-- ================================= 
+          target: jar
+       ================================= -->
+  <target name="jar" depends="release, jar-server, jar-client-lib,
+      jar-example-client, jar-example-gameserver" />
+  
+  <!-- ================================= 
+          target: tests
+       ================================= -->
+  <target name="tests" depends="compile">
+    <junit fork="yes" printsummary="yes" haltonfailure="yes">
+      <classpath>
+        <path refid="classpath" />
+        <pathelement location="${build.dir}" />
+      </classpath>
+      <formatter type="plain" usefile="false" />
+      <batchtest fork="yes">
+        <fileset dir="${test-src.dir}">
+          <include name="**/*.java" />
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
+  
+  <!-- ================================= 
+          target: publish-to-repo
           
-          Will drop the whole database before starting!
-                                
-         - - - - - - - - - - - - - - - - - -->
-	<target name="test-db-create" depends="resolve">
-		<property name="dbName" value="jdbcDemoDB" />
+          Pushes the JAR files to the Timadorus Artifactory Repository.
+       ================================= -->
+  <target name="publish-to-repo" depends="resolve,jar">
+  	<ivy:publish pubrevision="${pub.version}" status="${pub.status}" resolver="${pub.release.resolver}" overwrite="true">
+  		<artifacts pattern="${release.dir}/[artifact].[ext]" />
+  	</ivy:publish>
+  </target>
 
-		<updateDatabase dropFirst="true" changeLogFile="${src.dir}/org/timadorus/auth/server/db/changelog/db.changelog-master.xml" driver="org.apache.derby.jdbc.EmbeddedDriver" url="jdbc:derby:${dbName};create=true" username="authserv" password="ty32re8pu" classpathref="compile.classpath" />
-	</target>
-
-	<!-- ================================= 
-          target: test_java              
-         ================================= -->
-
-	<target name="test_java" depends="resolve,prep-dirs,compile,test-setup" description="run all tests">
-		<jacoco:coverage>
-			<junit fork="yes" haltonfailure="yes" showoutput="on">
-				<classpath>
-					<path refid="testing.classpath" />
-					<pathelement path="${instrumented.bindir}" />
-					<pathelement path="${build.dir}" />
-				</classpath>
-				<jvmarg value="-XX:-UseSplitVerifier" />
-				<!-- to make emma work with Java7 -->
-				<formatter type="xml" />
-				<formatter type="plain" usefile="false" />
-				<test name="org.timadorus.auth.test.AuthServiceSmokeTest" todir="${test-report.dir}" />
-			</junit>
-		</jacoco:coverage>
-
-		<!-- prepare the coverage report -->
-		<jacoco:report>
-			<executiondata>
-				<file file="jacoco.exec" />
-			</executiondata>
-
-			<structure name="TimadorusAuthServer">
-				<sourcefiles encoding="UTF-8">
-					<fileset dir="${src.dir}" />
-					<fileset dir="${test-src.dir}" />
-				</sourcefiles>
-			</structure>
-
-			<html destdir="${coverage.dir}" />
-		</jacoco:report>
-	</target>
-
-	<!-- ================================= 
-          target: test-setup              
-         ================================= -->
-	<target name="test-setup" depends="" description="copies all needed file into the directory ${build.dir}/resources to prepare for the tests to find it">
-		<mkdir dir="${build.resources}" />
-		<copy todir="${build.resources}">
-			<fileset dir="${src.dir}">
-				<patternset refid="meta.files" />
-			</fileset>
-		</copy>
-
-	</target>
-
-	<!-- ================================= 
-          target: test-checkstyle              
-         ================================= -->
-	<target name="test-checkstyle" depends="resolve,test-setup" description="--> check the style of the source code and run some static quality checks on the code.">
-		<sequential>
-			<mkdir dir="${basedir}/test-results" />
-			<checkstyle config="${basedir}/checkstyle.xml" failOnViolation="true">
-				<formatter type="plain" />
-				<formatter type="xml" toFile="${basedir}/test-results/checkstyle-log.xml" />
-				<fileset dir="${src.dir}" includes="**/*.java" />
-				<property key="checkstyle.cache.file" file="${build.dir}/checkstyle-cache" />
-			</checkstyle>
-		</sequential>
-	</target>
-
-	<!-- ================================= 
-          target: clean              
-         ================================= -->
-	<target name="clean" description="delete all derived objects">
-
-		<delete dir="${build.dir}/org" includeemptydirs="true" />
-		<delete dir="${build.dir}/lib" includeemptydirs="true" />
-		<delete dir="${build.dir}/resources" includeemptydirs="true" />
-		<delete dir="${instrumented.bindir}" />
-		<delete file="${basedir}/cobertura.ser" />
-
-		<ivy:cleancache />
-		<delete dir="${lib.dir}" includeemptydirs="true" />
-	</target>
-
-	<!-- ================================= 
-          target: javadoc              
-         ================================= -->
-	<target name="javadoc" depends="compile" description="--> generate the javadoc documentation files">
-		<javadoc destdir="${doc.apidoc.dir}" windowTitle="Cornerstone" author="true" version="true" use="true">
-			<classpath refid="project.classpath" />
-			<packageset dir="${src.dir}" defaultexcludes="yes">
-				<include name="org/timadorus/auth/**" />
-				<exclude name="org/timadorus/auth/**/test/**" />
-			</packageset>
-			<doctitle>
-				<![CDATA[<h1>Timadorus Authentication Server</h1>]]>
-			</doctitle>
-		<bottom>
-			<![CDATA[<i>Copyright &#169; 2007-2012 Timadorus Project. All Rights Reserved.</i>]]>
-			</bottom>
-</javadoc>
-</target>
-
-
-<target name="distjar" description="Create the set of jars for the authentication server" depends="compile">
-<jar jarfile="${basedir}/auth-server.jar" basedir="${build.dir}">
-	<include name="**/auth/server/*.class" />
-	<exclude name="**/*Test.class" />
-</jar>
-<jar jarfile="${basedir}/auth-server-sgs.jar" basedir="${build.dir}">
-	<include name="**/auth/sgs/*.class" />
-	<include name="**/auth/shared/*.class" />
-	<exclude name="**/*Test.class" />
-	<include name="**/etc/sgs-conf/*" />
-</jar>
-<jar jarfile="${basedir}/auth-server-client.jar" basedir="${build.dir}">
-	<include name="**/auth/sgs/*.class" />
-	<include name="**/auth/shared/*.class" />
-	<exclude name="**/*Test.class" />
-	<include name="**/etc/sgs-conf/*" />
-</jar>
-</target>
-
-<!-- ================================= 
-	          target: publish snapshot
-     ================================= -->
-<target name="publish" depends="javadoc, distjar" description="Publish this build into repository">
-<ivy:publish pubrevision="${pub.version}-SNAPSHOT" status="${pub.status}" resolver="${pub.snapshot.resolver}" overwrite="true" update="true">
-	<artifacts pattern="${build.dir}/[artifact].[ext]" />
-</ivy:publish>
-</target>
-
-<!-- ================================= 
-	          target: publish release  
-     ================================= -->
-<target name="publish-release" depends="javadoc, distjar" description="Publish this build into repository">
-<ivy:publish pubrevision="${pub.version}" status="${pub.status}" resolver="${pub.release.resolver}" overwrite="true">
-	<artifacts pattern="${build.dir}/[artifact].[ext]" />
-</ivy:publish>
-</target>
-
-<!--    <target name="build" depends="resolve, test-checkstyle, test_java, distjar, publish" />
-    Publishing is not properly configured right now!! 
--->
-<target name="build" depends="resolve, test-checkstyle, test_java, distjar" />
+  <target name="main" depends="clean,resolve,jar" />
 </project>

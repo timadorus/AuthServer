@@ -1,68 +1,126 @@
-/* -*- java -*- */
-/*
- * Filename:          org.timadorus.auth.server.AuthServer.java
- *                                                                       *
- * Project:           TimadorusAuthServer
- * Programm:
- * Function:
- * Documentation file:
- *
- * This file is distributed under the GNU Public License 2.0
- * See the file Copying for more information
- *
- * copyright (c) 2010 Lutz Behnke <lutz.behnke@gmx.de>
- *
- * THE AUTHOR MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE
- * SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT
- * NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR
- * A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. THE AUTHOR SHALL NOT BE
- * LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING,
- * MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package org.timadorus.auth.server;
 
-import gnu.getopt.Getopt;
-
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.security.Principal;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.timadorus.auth.server.SimpleAuthorizer.SimpleEntity;
-import org.timadorus.auth.server.db.JDBCBasicPWAuthenticator;
-
 import com.sun.grizzly.SSLConfig;
+import com.sun.grizzly.http.SelectorThread;
 import com.sun.grizzly.http.servlet.ServletAdapter;
 import com.sun.grizzly.ssl.SSLSelectorThread;
 import com.sun.grizzly.standalone.StaticStreamAlgorithm;
 import com.sun.grizzly.util.net.jsse.JSSEImplementation;
+import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 /**
- * @author sage
- *
+ * Implements the actual HTTP server-component of the auth-server.
+ * 
+ * @author
+ *  sage,
+ *  Torben Könke
  */
 public class AuthServer {
+  /**
+   * The port on which the server is accepting HTTP requests.
+   */
+  private int port;
 
-  private static final int DEFAULT_PORT = 9998;
+  /**
+   * The file that contains the key-store to use for the SSL server.
+   */
+  private String keyStoreFile;
+
+  /**
+   * The password for the key-store that is being used.
+   */
+  private String keyStorePassword;
   
-  protected String host = "localhost";
-  protected int port = DEFAULT_PORT;
-  protected String truststorePath = "./";
-  protected String serverKeySecret = "123456";
-  protected SSLSelectorThread threadSelector;
+  /**
+   * The file that contains the trust-store to use for the SSL server.
+   */
+  private String trustStoreFile;
+  
+  /**
+   * The secret key that is shared with the gameserver.
+   */
+  private String sharedSecretKey;
+  
+  /**
+   * The network address the server is bound to.
+   */
+  private InetAddress inetAddress;
+  
+  /**
+   * The NIO selector-thread.
+   */
+  private SelectorThread threadSelector;
+  
+  /**
+   * Initializes a new instance of the AuthServer class.
+   * 
+   * @param port
+   *  The port to accept HTTP requests on.
+   * @param keyStoreFile
+   *  The file containing the key-store to use for the SSL server.
+   * @param keyStorePassword
+   *  The password for the key-store.
+   * @param trustStoreFile
+   *  The file containing the trust-store to use for the SSL server. If
+   *  a trust-store is not needed, this parameter can be null.
+   * @param sharedSecretKey
+   *  The secret key that is shared with the gameserver.
+   * @param inetAddress
+   *  The address to bind the server to. If this is null, the server will
+   *  accept connections on any of its interfaces.
+   * @throws IllegalArgumentException
+   *  The port parameter is not a valid port, or the keyStoreFile parameter
+   *  is null, or the sharedSecretKey parameter is null.
+   */
+  public AuthServer(int port, String keyStoreFile, String keyStorePassword,
+    String trustStoreFile, String sharedSecretKey, InetAddress inetAddress) {
+    if (port < 0 || port > 65535) {
+      throw new IllegalArgumentException("Invalid port.");
+    }
+    if (keyStoreFile == null) {
+      throw new IllegalArgumentException("keyStoreFile");
+    }
+    if (sharedSecretKey == null) {
+      throw new IllegalArgumentException("sharedSecretKey");
+    }
+    this.port = port;
+    this.keyStoreFile = keyStoreFile;
+    this.keyStorePassword = keyStorePassword;
+    this.trustStoreFile = trustStoreFile;
+    this.sharedSecretKey = sharedSecretKey;
+    this.inetAddress = inetAddress;
+  }
 
-  public SSLSelectorThread createSelector(Map<String, String> initParams) throws IOException {
-
+  /**
+   * Creates the NIO selector for the Grizzly HTTP server.
+   * 
+   * @return
+   *  An initialized instance of the SSLSelectorThread class.
+   * @throws IOException
+   *  The selector-thread could not be created.
+   */
+  private SSLSelectorThread createSelector() throws IOException {
     ServletAdapter adapter = new ServletAdapter();
+    Map<String, String> initParams =  new HashMap<String, String>();
+    // This _must_ be set up to point to the proper package.
+    initParams.put("com.sun.jersey.config.property.packages",
+                   getClass().getPackage().getName());    
     for (Map.Entry<String, String> e : initParams.entrySet()) {
       adapter.addInitParameter(e.getKey(), e.getValue());
     }
-
     adapter.setServletInstance(new ServletContainer());
-    adapter.setContextPath("/");    
+    adapter.setContextPath("/");
+    // Add the shared secret-key as an init parameter so that it can be
+    // accessed from the Resource classes, serving the HTTP requests.
+    adapter.addInitParameter("sharedSecretKey", sharedSecretKey);
+    // Set up request filtering for convenient verification of credentials.
+    adapter.addInitParameter(ResourceConfig.PROPERTY_CONTAINER_REQUEST_FILTERS,
+                             SecurityFilter.class.getName());
 
     final SSLSelectorThread selectorThread = new SSLSelectorThread();
     try {
@@ -70,22 +128,26 @@ public class AuthServer {
     } catch (ClassNotFoundException e) {
       throw new IllegalStateException(e);
     }
-    
+    // Setup SSL.
     SSLConfig sslConfig = new SSLConfig(true);
-    sslConfig.setTrustStoreFile(truststorePath + "/cacert");
-    sslConfig.setKeyStoreFile(truststorePath + "/server");
-    sslConfig.setKeyStorePass(serverKeySecret);
+    if (trustStoreFile != null) {
+      sslConfig.setTrustStoreFile(trustStoreFile);
+    }
+    sslConfig.setKeyStoreFile(keyStoreFile);
+    sslConfig.setKeyStorePass(keyStorePassword);
     selectorThread.setSSLConfig(sslConfig);
-    if (selectorThread.getSSLContext() == null) {      
+    if (selectorThread.getSSLContext() == null) {
       selectorThread.setSSLContext(sslConfig.createSSLContext());
     }
-        
+
     selectorThread.setAlgorithmClassName(StaticStreamAlgorithm.class.getName());
+    if (inetAddress != null) {
+      selectorThread.setInet(inetAddress);
+    }
     selectorThread.setPort(port);
     selectorThread.setAdapter(adapter);
-    
-
     try {
+      // Starts the server on a separate thread.
       selectorThread.listen();
     } catch (InstantiationException e) {
       IOException innerE = new IOException();
@@ -93,199 +155,62 @@ public class AuthServer {
       throw innerE;
     }
     return selectorThread;
-  }    
-
-
-  protected void usage() {
-    System.err.println("usage: authserver [-h HOST] [-p PORT] [-t TRUSTSTORE_PATH] [-s SERVER_KEY_SECRET]\n");
   }
-  
-  public void parseArgs(String[] args) throws IOException, URISyntaxException {
-    
-    Getopt g = new Getopt("authserver", args, "h:p:t:s:");
-    
-    int c;
-    boolean runUsage = false;
-    String arg;
-    
-    while ((c = g.getopt()) != -1) {
-        switch(c) {
-          case 'h':
-            arg = g.getOptarg();
-            if (arg == null) {
-              runUsage = true;
-              System.err.println("argument for option h missing: name of the host to map.\n");
-            } else {
-              host = arg;
-            }
-            break;
-          case 'p':
-            arg = g.getOptarg();
-            if (arg == null) {
-              runUsage = true;
-              System.err.println("argument for option p missing: port to listen on.\n");
-            } else {
-              host = arg;
-            }
-            int argi = Integer.parseInt(g.getOptarg());
-            if (argi != 0) { port = argi; }
-            break;
-          case 't':
-            arg = g.getOptarg();
-            if (arg == null) {
-              runUsage = true;
-              System.err.println("argument for option t missing: path to the truststore.\n");
-            } else {
-              truststorePath = arg;
-            }
-            break;
-          case 's':
-            arg = g.getOptarg();
-            if (arg == null) {
-              runUsage = true;
-              System.err.println("argument for option s missing: server key secret\n");
-            } else {
-              serverKeySecret = arg;
-            }
-            break;
-          case '?':
-            runUsage = true;
-            break;
-          default:
-            System.err.print("unknown option " + c + "\n");
-            runUsage = true;
-          }
-      }
-    
-    if (runUsage) { usage(); }
-    
-    }
-    
-  /** start the server.
+
+  /**
+   * Starts the auth-server.
    * 
    * @throws IOException
-   * @throws URISyntaxException 
-   * @throws IllegalStateException if the server secret has not been set.
+   *  An error occurred while starting the auth-server.
    */
-  public void start() throws IOException, URISyntaxException, IllegalStateException {
-    
-    if (serverKeySecret == null) { throw new IllegalStateException("server secret has not been set"); }
-    
-    Map<String, String> initParams =  new HashMap<String, String>();
+  public void start() throws IOException {
+    threadSelector = createSelector();
+  }
 
-    initParams.put("com.sun.jersey.config.property.packages", "org.timadorus.auth.server");
-
-    threadSelector = createSelector(initParams);
-  }    
-
+  /**
+   * Stops the auth-server.
+   */
   public void stop() {
-    threadSelector.stopEndpoint();    
-  }
-  
-  public static void main(String[] args) throws IOException, URISyntaxException {
-    AuthServer server = new AuthServer();
-    
-    
-    /*
-     *            determine the User information for authentication  
-     */
-    //BasicPasswordAuthenticator authenticator = new BasicPasswordAuthenticator();
-    JDBCBasicPWAuthenticator authenticator = new JDBCBasicPWAuthenticator();
-    /*
-    try {
-      authenticator.createTables("");
-    } catch (SQLException e) {
-      System.err.println("failed to create the tables");
-      e.printStackTrace();
-    }
-    Principal user = authenticator.addUser("fii", "br");
-    */
-    
-    Principal user = new Identity("fii");
-    /*
-     *            determine the Entity information for authorization  
-     */
-    SimpleAuthorizer authorizer = new SimpleAuthorizer();
-    SimpleEntity lotrEntity = authorizer.createEntity("LotR", null);
-    authorizer.addEntity(user, lotrEntity);
-    SimpleEntity fellowEntity = authorizer.createEntity("Fellowship", lotrEntity);
-    authorizer.addEntity(user, fellowEntity);
-    SimpleEntity twoTowerEntity = authorizer.createEntity("Two_Towers", lotrEntity);
-    authorizer.addEntity(user, twoTowerEntity);
-    authorizer.addEntity(user, authorizer.createEntity("Boromir", fellowEntity));
-    authorizer.addEntity(user, authorizer.createEntity("Aragorn", fellowEntity));
-    authorizer.addEntity(user, authorizer.createEntity("Eowin", twoTowerEntity));
-    
-    authorizer.setSharedSecret("foobarsecret1234"); // must be 16 chars in length
-    
-    AuthManager.addAuthenticator(AuthManager.AuthType.Basic, authenticator);
-    AuthManager.addAuthorizer(authorizer);
-    
-    server.parseArgs(args);
-    System.out.println("Starting grizzly...");
-    server.start();
+    threadSelector.stopEndpoint();
   }
 
-
+  /**
+   * Gets the port on which the HTTP server is running.
+   * 
+   * @return
+   *  The port on which the HTTP server is running.
+   */
   public int getPort() {
     return port;
   }
-
-
+  
   /**
-   * @return the host
+   * Gets the key-store file.
+   * 
+   * @return
+   *  The key-store file.
    */
-  public final String getHost() {
-    return host;
-  }
-
-
-  /**
-   * @param host the host to set
-   */
-  public final void setHost(String host) {
-    this.host = host;
-  }
-
-
-  /**
-   * @param port the port to set
-   */
-  public final void setPort(int port) {
-    this.port = port;
-  }
-
-
-  /**
-   * @return the serverKeySecret
-   */
-  public final String getServerKeySecret() {
-    return serverKeySecret;
-  }
-
-
-  /**
-   * @param serverKeySecret the serverKeySecret to set
-   */
-  public final void setServerKeySecret(String serverKeySecret) {
-    this.serverKeySecret = serverKeySecret;
-  }
-
-
-  /**
-   * @return the truststorePath
-   */
-  public final String getTruststorePath() {
-    return truststorePath;
-  }
-
-
-  /**
-   * @param truststorePath the truststorePath to set
-   */
-  public final void setTruststorePath(String truststorePath) {
-    this.truststorePath = truststorePath;
+  public String getKeyStoreFile() {
+    return keyStoreFile;
   }
   
+  /**
+   * Gets the password for the key-store.
+   * 
+   * @return
+   *  The password for the key-store.
+   */
+  public String getKeyStorePassword() {
+    return keyStorePassword;
+  }
   
+  /**
+   * Gets the trust-store file.
+   * 
+   * @return
+   *  The trust-store file or null if no trust-store has been set.
+   */
+  public String getTrustStoreFile() {
+    return trustStoreFile;
+  }
 }
