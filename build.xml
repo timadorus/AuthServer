@@ -42,10 +42,12 @@
        ================================= -->
   <target name="compile">
     <mkdir dir="${build.dir}" />
-    <javac srcdir="${src.dir}" destdir="${build.dir}"
-      classpathref="classpath" includeantruntime="false" />
-    <javac srcdir="${test-src.dir}" destdir="${build.dir}"
-      classpathref="classpath" includeantruntime="false" />
+    <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="classpath" includeantruntime="false">
+      <compilerarg line="-encoding utf-8"/>
+    </java>
+    <javac srcdir="${test-src.dir}" destdir="${build.dir}" classpathref="classpath" includeantruntime="false">
+      <compilerarg line="-encoding utf-8"/>
+    </javac>
   </target>
   
   <!-- ================================= 
