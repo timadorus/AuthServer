@@ -37,7 +37,7 @@
      included with Java.
   -->
   <entry key="keyStoreFile">
-    C:\Users\abc\workspace\AuthLight\etc\server
+    ./etc/server
   </entry>
   <!-- The password for the key-store. -->
   <entry key="keyStorePassword">123456</entry>
@@ -46,7 +46,7 @@
      included with Java.
   -->
   <entry key="trustStoreFile">
-    C:\Users\abc\workspace\AuthLight\etc\cacerts
+    ./etc/cacerts
   </entry>
   
   <!-- ************************************* -->
