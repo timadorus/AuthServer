@@ -4,6 +4,7 @@ import java.io.DataOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
+
 import org.timadorus.auth.client.Authenticator;
 
 /**
@@ -79,6 +80,7 @@ public final class Program {
     String authToken = auth.getAuthToken(entity);
     // The auth-server returns an opaque auth-token which we hand to the
     // game server as our proof of authentication.
+    System.out.println("Received auth-token: " + authToken);
     System.out.println("Connecting to gameserver...");
     connectToGameServer(authToken);
   }
