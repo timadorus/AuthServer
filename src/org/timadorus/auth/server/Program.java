@@ -40,6 +40,7 @@ public final class Program {
    */
   public static void main(String[] args) throws Exception {
     String configPath = "./";
+    boolean interactive = false;
     if (args.length > 0) {
       configPath = args[0];
     }
@@ -58,6 +59,12 @@ public final class Program {
     InetAddress inetAddr = null;
     if (addr != null) {
       inetAddr = InetAddress.getByName(addr);
+    }
+    String interactiveMode = props.getProperty("interactiveMode");
+    if (interactiveMode != null) {
+      if (!interactiveMode.equals("false")) {
+        interactive = true;
+      }
     }
     // Make sure a key-store file and password have been specified.
     String keyStoreFile = props.getProperty("keyStoreFile");
@@ -92,18 +99,32 @@ public final class Program {
         + "'dbConnectionString' settings in the '" + CONFIG
         + "' file are correct.");
     }
+    
     // Be sure the tables exist.
-    Database.createTables();
+    if (!Database.tablesExist()) {
+      System.out.println("Attempting to create database tables...");
+      Database.createTables();
+      // Create the default administrator account.
+      Database.createUser("admin", "password", true);
+      System.out.println("Created database tables. You should now change the "
+          + "password 'password' of the default administrator account "
+          + "'account'.");
+    }
     // Create and start a new auth-server instance.
     AuthServer server = new AuthServer(listenPort, keyStoreFile, keyStorePass,
         trustStoreFile, sharedSecretKey, inetAddr);
     server.start();
     String m = "Timadorus auth server started. Accepting connections on "
         + (addr != null ? addr : "all interfaces") + " on port "
-        + listenPort + ". Type help for a list of available commands.";
+        + listenPort + ".";
     System.out.println(m);
     // Start a simple command-line interpreter.
-    new Interpreter().start(server);
+    if (interactive) {
+      System.out.println("Type help for a list of available commands.");
+      new Interpreter().start(server);
+    } else {
+      System.out.println("Running as service.");
+    }
   }
   
   /**

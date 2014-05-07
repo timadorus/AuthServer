@@ -6,10 +6,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
+
 import org.apache.commons.codec.binary.Base64;
 import org.timadorus.auth.util.Crypto;
-import org.timadorus.auth.util.Util;
 
 /**
  * The resource class which handles the 'getAuthToken' HTTP request.
@@ -19,12 +18,7 @@ import org.timadorus.auth.util.Util;
  *
  */
 @Path("/getAuthToken")
-public class GetAuthTokenResource {
-  /**
-   * The HTTP headers of the HTTP request.
-   */
-  @Context HttpHeaders headers;
-  
+public class GetAuthTokenResource extends Resource {  
   /**
    * The Servlet configuration.
    */
@@ -44,9 +38,7 @@ public class GetAuthTokenResource {
   @Produces("text/plain")
   @Path("{entity}")
   public String getAuthToken(@PathParam("entity") String entity) throws Exception {    
-    // Get Username from HTTP request headers.
-    String auth = headers.getRequestHeader(HttpHeaders.AUTHORIZATION).get(0);
-    String username = Util.getBasicAccessUsername(auth);
+    String username = getUsername();
     // Make sure the entity actually exists.
     if (!Database.entityExists(username, entity)) {
       throw new Exception("The entity does not exist.");

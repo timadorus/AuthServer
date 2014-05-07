@@ -159,15 +159,16 @@ public class Interpreter {
    */
   private void create(String[] args) {
     if (args.length < 2) {
-      os.println("Invalid syntax. Try: user.create <name> <password>");
+      os.println("Invalid syntax. Try: user.create <name> <password> [admin]");
       return;
     }
     String name = args[0];
     String password = args[1];
+    boolean admin = args.length > 2;
     try {
-      Database.createUser(name, password);
-      String s = "Created user '" + name + "' with password '" + password
-          + "'.";
+      Database.createUser(name, password, admin);
+      String s = "Created " + (admin ? "admin " : "") + "user '" + name
+          + "' with password '" + password + "'.";
       os.println(s);
       LOG.info(s);
     } catch (Exception e) {

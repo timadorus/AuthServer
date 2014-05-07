@@ -162,9 +162,9 @@
   </target>
   
   <!-- ================================= 
-          target: publish-to-repo
-          
-          Pushes the JAR files to the Timadorus Artifactory Repository.
+         target: publish-to-repo
+         
+         Pushes the JAR files to the Timadorus Artifactory Repository.
        ================================= -->
   <target name="publish-to-repo" depends="resolve,jar">
   	<ivy:publish pubrevision="${pub.version}" status="${pub.status}" resolver="${pub.release.resolver}" overwrite="true">

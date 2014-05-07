@@ -3,6 +3,8 @@
 	<property name="org.repo.url" value="http://developer.timadorus.org/artifactory" />
 	<property name="upload.repo.url" value="http://developer.timadorus.org/artifactory" />
 	
+	<!-- Benutzer und Passwort für Upload setzen -->
+	<credentials host="developer.timadorus.org" realm="Artifactory Realm" username="upload" passwd="secret"/>
 
 	<!-- Es wird definiert welches Verfahren zur Auflösung der Abhängigkeiten 
 		verwendet werden soll (Werden später in dieser Datei definiert) -->

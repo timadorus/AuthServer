@@ -1,14 +1,12 @@
 package org.timadorus.auth.server;
 
 import java.util.Iterator;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 
 import org.apache.commons.codec.binary.Base64;
-import org.timadorus.auth.util.Util;
 
 /**
  * The resource class which handles the 'listEntities' HTTP request.
@@ -18,12 +16,7 @@ import org.timadorus.auth.util.Util;
  *
  */
 @Path("/listEntities")
-public class ListEntitiesResource {
-  /**
-   * The HTTP headers of the HTTP request.
-   */
-  @Context HttpHeaders headers;
-
+public class ListEntitiesResource extends Resource {
   /**
    * The method which is executed when the /listEntities resource is being
    * requested.
@@ -37,8 +30,7 @@ public class ListEntitiesResource {
   @Produces("text/plain")
   public String listEntities() throws Exception {
     // Get Username from Request headers.
-    String auth = headers.getRequestHeader(HttpHeaders.AUTHORIZATION).get(0);
-    String username = Util.getBasicAccessUsername(auth);
+    String username = getUsername();
     // Fetch entities from DB and return them as a colon-separated base64-encoded string.
     StringBuilder builder = new StringBuilder();
     Iterator<String> iter = Database.listEntities(username).iterator();

@@ -1,12 +1,14 @@
 package org.timadorus.auth.server;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
+
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.timadorus.auth.util.Crypto;
 
@@ -15,8 +17,8 @@ import org.timadorus.auth.util.Crypto;
  * tables.
  * 
  * The SQL dialect used is the Apache Derby SQL dialect. If, at some point,
- * another database provider is to be used, you must alter the SQL statements
- * in this class accordingly.
+ * another database provider is to be used, the SQL statements in this class
+ * must be altered accordingly.
  * 
  * @author Torben Könke
  */
@@ -86,6 +88,37 @@ public final class Database {
       }
     }
   }
+  
+  /**
+   * Determines whether the auth tables already exist.
+   * 
+   * @return
+   *  true if the auth tables exist; Otherwise false.
+   * @throws SQLException
+   *           The connection to the database could not be established.
+   */
+  public static boolean tablesExist() throws SQLException {
+    Connection con = getConnection();
+    ResultSet rs = null;
+    try {
+      DatabaseMetaData dbmd = con.getMetaData();
+      // With Derby, the default database schema applied to all SQL statements
+      // is the same as the user id provided, even if the schema does not exist.
+      // If no user id is provided, the default schema 'APP' is used.
+      rs = dbmd.getTables(null, dbmd.getUserName().toUpperCase(),
+                          (prefix + "users").toUpperCase(), null);
+      return rs.next();
+    } catch (SQLException e) {
+      return false;
+    } finally {
+      if (rs != null) {
+        rs.close();
+      }
+      if (con != null) {
+        con.close();
+      }
+    }
+  }
 
   /**
    * Creates the tables in the auth database.
@@ -96,16 +129,24 @@ public final class Database {
    */
   public static boolean createTables() throws SQLException {
     String usersTable = "CREATE TABLE " + prefix + "users"
-        +  "(user_id INT NOT NULL GENERATED ALWAYS AS IDENTITY "
-        +  "   CONSTRAINT user_id_pk PRIMARY KEY, "
-        +  " name VARCHAR(255) NOT NULL CONSTRAINT user_name_const UNIQUE, "
-        +  " password VARCHAR(255) NOT NULL) ";
+        + "(user_id INT NOT NULL GENERATED ALWAYS AS IDENTITY CONSTRAINT "
+        + "user_id_pk PRIMARY KEY, name VARCHAR(255) NOT NULL CONSTRAINT "
+        + "name_unique UNIQUE, password VARCHAR(255) NOT NULL, "
+        + "admin SMALLINT DEFAULT 0 NOT NULL, last_login TIMESTAMP, "
+        + "flags INTEGER DEFAULT 0 NOT NULL)";
     
-    String entitiesTable = "CREATE TABLE " + prefix + "entitiesPerUser "
-        +  "(entity_id INT NOT NULL GENERATED ALWAYS AS IDENTITY "
-        +  "   CONSTRAINT entity_id_pk PRIMARY KEY, "
-        +  " user_id INT NOT NULL, "
-        +  " label VARCHAR(80) NOT NULL) ";
+    String entitiesTable = "CREATE TABLE " + prefix + "entitiesPerUser"
+        + "(entity_id INT NOT NULL GENERATED ALWAYS AS IDENTITY CONSTRAINT "
+        + "entity_id_pk PRIMARY KEY, user_id INT NOT NULL CONSTRAINT "
+        + "user_foreign_key REFERENCES " + prefix + "users ON DELETE CASCADE, "
+        + "name VARCHAR(255) NOT NULL, last_login TIMESTAMP, "
+        + "flags INTEGER DEFAULT 0 NOT NULL)";
+    
+    String attributesTable = "CREATE TABLE " + prefix + "attributesPerEntity"
+        + "(entity_id INT NOT NULL CONSTRAINT entity_foreign_key REFERENCES "
+        + prefix + "entitiesPerUser ON DELETE CASCADE, name VARCHAR(255) "
+        + "NOT NULL, value VARCHAR(255) NOT NULL, PRIMARY KEY(entity_id, name))";
+    
     Statement statement = null;
     Connection con = getConnection();
     try {
@@ -113,8 +154,12 @@ public final class Database {
       statement.execute(usersTable);
       statement = con.createStatement();
       statement.execute(entitiesTable);
+      statement = con.createStatement();
+      statement.execute(attributesTable);
       return true;
     } catch (SQLException e) {
+      e.printStackTrace();
+      System.out.println(e);
       return false;
     } finally {
       if (statement != null) {
@@ -219,6 +264,9 @@ public final class Database {
    *          The name of the user to create.
    * @param password
    *          The password of the user to create.
+   * @param admin
+   *          Set to true to create an administrator, or false to create a normal
+   *          user.
    * @throws SQLException
    *          The connection to the database could not be established, or
    *          another database-related error occurred.
@@ -227,7 +275,8 @@ public final class Database {
    * @throws Exception
    *          A user with the specified name already exists in the auth table.
    */
-  public static void createUser(String username, String password) throws Exception {
+  public static void createUser(String username, String password, boolean admin)
+      throws Exception {
     if (username == null) {
       throw new IllegalArgumentException("username");
     }
@@ -238,8 +287,8 @@ public final class Database {
       throw new Exception("A user with the name of '" + username
         + "' already exists in the auth table.");
     }
-    String sqlStatement = "INSERT INTO " + prefix + "users (name, password) "
-        + "VALUES (?, ?)";
+    String sqlStatement = "INSERT INTO " + prefix + "users (name, password, admin) "
+        + "VALUES (?, ?, ?)";
     Connection con = null;
     PreparedStatement statement = null;
     try {
@@ -247,6 +296,7 @@ public final class Database {
       statement = con.prepareStatement(sqlStatement);
       statement.setString(1, username);
       statement.setString(2, Crypto.createHash(password));
+      statement.setShort(3, (short) (admin ? 1 : 0));
       if (statement.executeUpdate() == 0) {
         throw new SQLException("Insertion failed.");
       }
@@ -356,6 +406,48 @@ public final class Database {
       }
     }
   }
+  
+  /**
+   * Determines whether the specified user is an administrator.
+   * 
+   * @param username
+   *  The name of the user.
+   * @return
+   *  true if the specified user is an administrator; Otherwise false.
+   * @throws Exception
+   *  A user with the specified username does not exist in the auth table.
+   */
+  public static boolean isAdmin(String username) throws Exception {
+    if (username == null) {
+      throw new IllegalArgumentException("username");
+    }
+    String sqlStatement = "SELECT admin FROM " + prefix + "users WHERE name = ?";
+    Connection con = null;
+    PreparedStatement statement = null;
+    ResultSet resultSet = null;
+    try {
+      con = Database.getConnection();
+      statement = con.prepareStatement(sqlStatement);
+      statement.setString(1, username);
+      statement.execute();
+      resultSet = statement.getResultSet();
+      if (!resultSet.next()) {
+        throw new Exception("A user with the name of '" + username
+                            + "' does not exist in the auth table.");
+      }
+      return resultSet.getShort("admin") != 0;
+    } finally {
+      if (resultSet != null) {
+        resultSet.close();
+      }
+      if (statement != null) {
+        statement.close();
+      }
+      if (con != null) {
+        con.close();
+      }
+    }
+  }
 
   /**
    * Returns a list of the names of all users in the auth table.
@@ -447,7 +539,7 @@ public final class Database {
       throw new Exception("entity already exists");
     }
     String sqlStatement = "INSERT INTO " + prefix
-        + "entitiesPerUser (user_id, label) "
+        + "entitiesPerUser (user_id, name) "
         + "VALUES (?, ?)";
     Connection con = null;
     PreparedStatement statement = null;
@@ -494,7 +586,7 @@ public final class Database {
     }
     int userId = getUserId(username);
     String sqlStatement = "DELETE FROM " + prefix
-        + "entitiesPerUser WHERE user_id = ? AND label = ?";
+        + "entitiesPerUser WHERE user_id = ? AND name = ?";
     Connection con = null;
     PreparedStatement statement = null;
     ResultSet resultSet = null;
@@ -558,7 +650,7 @@ public final class Database {
       throw new IllegalArgumentException("entity");
     }
     String sqlStatement = "SELECT * from " + prefix
-        + "entitiesPerUser WHERE user_id = ? AND label = ?";
+        + "entitiesPerUser WHERE user_id = ? AND name = ?";
     Connection con = null;
     PreparedStatement statement = null;
     ResultSet resultSet = null;
@@ -601,7 +693,7 @@ public final class Database {
       throw new IllegalArgumentException("username");
     }
     int userId = getUserId(username);
-    String sqlStatement = "SELECT label from " + prefix
+    String sqlStatement = "SELECT name from " + prefix
         + "entitiesPerUser WHERE user_id = ?";
     Connection con = null;
     PreparedStatement statement = null;
@@ -613,7 +705,7 @@ public final class Database {
       resultSet = statement.executeQuery();
       List<String> names = new LinkedList<String>();
       while (resultSet.next()) {
-        names.add(resultSet.getString("label"));
+        names.add(resultSet.getString("name"));
       }
       return names;
     } finally {

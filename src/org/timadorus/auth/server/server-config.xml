@@ -19,15 +19,15 @@
       For embedded Derby:    org.apache.derby.jdbc.EmbeddedDriver
       For traditional Derby: org.apache.derby.jdbc.ClientDriver
    -->
-  <entry key="dbDriverClassName">org.apache.derby.jdbc.EmbeddedDriver</entry>
+  <entry key="dbDriverClassName">org.apache.derby.jdbc.ClientDriver</entry>
   <!-- The connection-string for connecting to the auth database. Note that
      the & character must be encoded as &amp;
   -->
   <entry key="dbConnectionString">
-    jdbc:derby:auth-database;create=true
+    jdbc:derby://localhost/timadorus;create=true;user=authserver;password=geheim
   </entry>
   <!-- The prefix, if any, of the database tables. -->
-  <entry key="dbTablePrefix">users</entry>
+  <!--<entry key="dbTablePrefix">tm_</entry>-->
   
   <!-- ************************************* -->
   <!-- ********* KEYSTORE SETTINGS ********* -->
@@ -58,11 +58,18 @@
   <entry key="sharedSecretKey">
     SuperGeheim
   </entry>
-  <!--  The path to the logging.properties file. If this setting is omitted,
+  <!-- The path to the logging.properties file. If this setting is omitted,
     the logging.properties file path can also be set by specifying it as a
     system property (-Djava.util.logging.config.file) when starting the
     application. -->
   <entry key="loggingFile">
     ./logging.properties
+  </entry>
+  <!-- Determines whether the server should run in interactive mode. In
+       interactive mode, a simple command-interpreter is available for
+       controlling the auth-server from the command-line. When running the
+       server as a service, interactive mode should be disabled. -->
+  <entry key="interactiveMode">
+    false
   </entry>
 </properties>
