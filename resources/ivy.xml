@@ -1,5 +1,5 @@
 <ivy-module version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd" xmlns:m="http://ant.apache.org/ivy/maven">
-	<info organisation="org.timadorus" module="TimadorusAuthServer" revision="0.1"/>
+	<info organisation="org.timadorus" module="TimadorusAuthServer" revision="2.0"/>
 	
     <publications>
     	<artifact name="auth-server" type="jar" ext="jar" />
@@ -30,5 +30,8 @@
 
 		<!-- CheckStyle -->
 		<dependency org="com.puppycrawl.tools" name="checkstyle" rev="5.4" conf="*->default"/>
+		
+		<!-- Google Gson -->
+		<dependency org="com.google.code.gson" name="gson" rev="2.2.4" />
 	</dependencies>
 </ivy-module>

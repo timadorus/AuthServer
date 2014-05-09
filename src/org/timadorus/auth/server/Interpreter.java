@@ -166,7 +166,7 @@ public class Interpreter {
     String password = args[1];
     boolean admin = args.length > 2;
     try {
-      Database.createUser(name, password, admin);
+      Database.createUser(name, password, admin, 0);
       String s = "Created " + (admin ? "admin " : "") + "user '" + name
           + "' with password '" + password + "'.";
       os.println(s);
@@ -190,7 +190,7 @@ public class Interpreter {
     String name = args[0];
     String password = args[1];
     try {
-      Database.editPassword(name, password);
+      Database.updateUser(name, password, null, null);
       String s = "Set password of user '" + name + "' to '" + password
           + "'.";
       os.println(s);
@@ -259,7 +259,7 @@ public class Interpreter {
     }
     try {
       os.println("Listing auth table:");
-      List<String> users = Database.listUsers();
+      List<String> users = Database.listUsers(null);
       int count = 0;
       for (String name : users) {
         if (count >= maxList) {
@@ -309,7 +309,7 @@ public class Interpreter {
     String username = args[0];
     String entity = args[1];
     try {
-      Database.createEntity(username, entity);
+      Database.createEntity(username, entity, 0);
       String s = "Created entity '" + entity + "' for user '" + username
           + "'.";
       os.println(s);
@@ -357,9 +357,9 @@ public class Interpreter {
     try {
       String username = args[0];
       os.println("Listing entities of user '" + username + "':");
-      List<String> ent = Database.listEntities(username);
-      for (String name : ent) {
-        os.println(" - " + name);
+      List<Entity> ents = Database.listEntities(username);
+      for (Entity e : ents) {
+        os.println(" - " + e.getName());
       }
     } catch (Exception e) {
       os.println("Could not list entities: " + e.getMessage());

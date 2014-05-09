@@ -6,8 +6,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.timadorus.auth.util.Crypto;
@@ -213,6 +215,54 @@ public final class Database {
   }
   
   /**
+   * Retrieves the data of the user with the the specified username.
+   * 
+   * @param username
+   *    The name of the user whose data to retrieve.
+   * @return
+   *    An initialized instance of the User class containing the user's
+   *    data, or null if no such user exists.
+   * @throws SQLException
+   *    The connection to the database could not be established, or
+   *    another database-related error occurred.
+   * @throws IllegalArgumentException
+   *    The username parameter is null.
+   */
+  public static User getUser(String username) throws SQLException {
+    if (username == null) {
+      throw new IllegalArgumentException("username");
+    }
+    String sqlStatement = "SELECT * from " + prefix + "users WHERE name = ?";
+    Connection con = null;
+    PreparedStatement statement = null;
+    ResultSet rs = null;
+    try {
+      con = Database.getConnection();
+      statement = con.prepareStatement(sqlStatement);
+      statement.setString(1, username);
+      statement.execute();
+      rs = statement.getResultSet();
+      if (!rs.next()) {
+        return null;
+      }
+      return new User(rs.getInt("user_id"), rs.getString("name"),
+                      rs.getString("password"), rs.getShort("admin") != 0,
+                      rs.getTimestamp("last_login"), rs.getInt("flags"));
+    } finally {
+      if (rs != null) {
+        rs.close();
+      }
+      if (statement != null) {
+        statement.close();
+      }
+      if (con != null) {
+        con.close();
+      }
+    }
+  }
+
+  
+  /**
    * Retrieves the password-hash for the specified user.
    * 
    * @param username
@@ -267,16 +317,18 @@ public final class Database {
    * @param admin
    *          Set to true to create an administrator, or false to create a normal
    *          user.
+   * @param flags
+   *          The flags to set on the user.
    * @throws SQLException
    *          The connection to the database could not be established, or
    *          another database-related error occurred.
    * @throws IllegalArgumentException
    *          The username parameter is null, or the password parameter is null.
-   * @throws Exception
+   * @throws IllegalStateException
    *          A user with the specified name already exists in the auth table.
    */
-  public static void createUser(String username, String password, boolean admin)
-      throws Exception {
+  public static void createUser(String username, String password, boolean admin,
+    int flags) throws SQLException {
     if (username == null) {
       throw new IllegalArgumentException("username");
     }
@@ -284,11 +336,11 @@ public final class Database {
       throw new IllegalArgumentException("password");
     }
     if (userExists(username)) {
-      throw new Exception("A user with the name of '" + username
+      throw new IllegalStateException("A user with the name of '" + username
         + "' already exists in the auth table.");
     }
-    String sqlStatement = "INSERT INTO " + prefix + "users (name, password, admin) "
-        + "VALUES (?, ?, ?)";
+    String sqlStatement = "INSERT INTO " + prefix + "users (name, password, admin, flags) "
+        + "VALUES (?, ?, ?, ?)";
     Connection con = null;
     PreparedStatement statement = null;
     try {
@@ -297,6 +349,7 @@ public final class Database {
       statement.setString(1, username);
       statement.setString(2, Crypto.createHash(password));
       statement.setShort(3, (short) (admin ? 1 : 0));
+      statement.setInt(4, flags);
       if (statement.executeUpdate() == 0) {
         throw new SQLException("Insertion failed.");
       }
@@ -309,43 +362,73 @@ public final class Database {
       }
     }
   }
-
+  
   /**
    * Edits the user in the auth table with the specified username.
    * 
    * @param username
-   *          The username of the user to edit.
+   *  The username of the user to edit.
    * @param password
-   *          The new password for the user.
+   *  The new password for the user, or null to keep the existing password.
+   * @param admin
+   *  true to make the user an administrator, false to make the user a
+   *  normal user, or null to keep the current setting.
+   * @param flags
+   *  The new flags to set on the user, or null to keep the existing flags.
    * @throws SQLException
-   *          The connection to the database could not be established, or
-   *          another database-related error occurred.
+   *  The connection to the database could not be established, or
+   *  another database-related error occurred.
    * @throws IllegalArgumentException
-   *          The usename parameter is null, or the password parameter is null.
-   * @throws Exception
-   *          A user with the specified username does not exist in the auth table.
+   *  The usename parameter is null.
+   * @throws IllegalStateException
+   *  A user with the specified username does not exist in the auth table.
    */
-  public static void editPassword(String username, String password) throws Exception {
+  public static void updateUser(String username, String password, Boolean admin,
+    Integer flags) throws SQLException {
     if (username == null) {
       throw new IllegalArgumentException("username");
     }
-    if (password == null) {
-      throw new IllegalArgumentException("password");
-    }
     if (!userExists(username)) {
-      throw new Exception("A user with the name of '" + username
+      throw new IllegalStateException("A user with the name of '" + username
         + "' does not exist in the auth table.");
     }
-    String sqlStatement = "UPDATE " + prefix + "users SET password = ? "
-        + "WHERE name = ?";
+    int stack = 1;
+    StringBuilder b = new StringBuilder("UPDATE " + prefix + "users SET ");
+    if (password != null) {
+      b.append("password = ?");
+      stack++;
+    }
+    if (admin != null) {
+      if (stack > 1) {
+        b.append(", ");
+      }
+      b.append("admin = ?");
+      stack++;
+    }
+    if (flags != null) {
+      if (stack > 1) {
+        b.append(", ");
+      }
+      b.append("flags = ?");
+      stack++;
+    }
+    b.append(" WHERE name = ?");
     Connection con = null;
     PreparedStatement statement = null;
     ResultSet resultSet = null;
     try {
       con = Database.getConnection();
-      statement = con.prepareStatement(sqlStatement);
-      statement.setString(1, Crypto.createHash(password));
-      statement.setString(2, username);
+      statement = con.prepareStatement(b.toString());
+      statement.setString(stack--, username);
+      if (flags != null) {
+        statement.setInt(stack--, flags);
+      }
+      if (admin != null) {
+        statement.setShort(stack--, (short) (admin.booleanValue() ? 1 : 0));
+      }
+      if (password != null) {
+        statement.setString(stack--, password);
+      }
       if (statement.executeUpdate() == 0) {
         throw new SQLException("Update failed.");
       }
@@ -372,15 +455,15 @@ public final class Database {
    *          another database-related error occurred.
    * @throws IllegalArgumentException
    *          The username parameter is null.
-   * @throws Exception
+   * @throws IllegalStateException
    *          A user with the specified username does not exist in the auth table.
    */
-  public static void deleteUser(String username) throws Exception {
+  public static void deleteUser(String username) throws SQLException {
     if (username == null) {
       throw new IllegalArgumentException("username");
     }
     if (!userExists(username)) {
-      throw new Exception("A user with the name of '" + username
+      throw new IllegalStateException("A user with the name of '" + username
         + "' does not exist in the auth table.");
     }
     String sqlStatement = "DELETE FROM " + prefix + "users WHERE name = ?";
@@ -414,10 +497,11 @@ public final class Database {
    *  The name of the user.
    * @return
    *  true if the specified user is an administrator; Otherwise false.
-   * @throws Exception
-   *  A user with the specified username does not exist in the auth table.
+   * @throws SQLException
+   *  The connection to the database could not be established, or
+   *  another database-related error occurred.
    */
-  public static boolean isAdmin(String username) throws Exception {
+  public static boolean isAdmin(String username) throws SQLException {
     if (username == null) {
       throw new IllegalArgumentException("username");
     }
@@ -432,8 +516,7 @@ public final class Database {
       statement.execute();
       resultSet = statement.getResultSet();
       if (!resultSet.next()) {
-        throw new Exception("A user with the name of '" + username
-                            + "' does not exist in the auth table.");
+        return false;
       }
       return resultSet.getShort("admin") != 0;
     } finally {
@@ -452,20 +535,32 @@ public final class Database {
   /**
    * Returns a list of the names of all users in the auth table.
    * 
+   * @param filter
+   *           A character pattern, which is a character string that
+   *           includes one or more wildcards. Supported wildcards are
+   *           % for any number (zero or more) of characters in the
+   *           corresponding position and _ for one character in the
+   *           corresponding position in the character expression.
+   *           This parameter can be null.
    * @return A list of names of all users in the auth table.
    * @throws SQLException
    *           The connection to the database could not be established, or
    *           another error occurred.
    */
-  public static List<String> listUsers() throws SQLException {
-    String sqlStatement = "SELECT name from " + prefix + "users";
+  public static List<String> listUsers(String filter) throws SQLException {
+    String sqlStatement = "SELECT name from " + prefix + "users"
+        + ((filter != null) ? " WHERE name LIKE ?" : "");
     Connection con = null;
-    Statement statement = null;
+    PreparedStatement statement = null;
     ResultSet resultSet = null;
     try {
       con = Database.getConnection();
-      statement = con.createStatement();
-      resultSet = statement.executeQuery(sqlStatement);
+      statement = con.prepareStatement(sqlStatement);
+      if (filter != null) {
+        statement.setString(1, filter);
+      }
+      statement.execute();
+      resultSet = statement.getResultSet();
       List<String> names = new LinkedList<String>();
       while (resultSet.next()) {
         names.add(resultSet.getString("name"));
@@ -520,14 +615,20 @@ public final class Database {
    *  The name of the user to add a new entity for.
    * @param entity
    *  The name of the new entity to add.
+   * @param flags
+   *  The flags to set on the new entity.
+   * @throws SQLException
+   *  The connection to the database could not be established, or
+   *  another database-related error occurred.
    * @throws IllegalArgumentException
    *  The username parameter is null, or the entity parameter is null.
-   * @throws Exception
+   * @throws IllegalStateException
    *  A user with the specified name does not exist in the auth table, or
    *  an entity with the specified name already exists in the specified
    *  user's set of entities.
    */
-  public static void createEntity(String username, String entity) throws Exception {
+  public static void createEntity(String username, String entity, int flags)
+      throws SQLException {
     if (username == null) {
       throw new IllegalArgumentException("username");
     }
@@ -536,11 +637,11 @@ public final class Database {
     }
     int userId = getUserId(username);
     if (entityExists(userId, entity)) {
-      throw new Exception("entity already exists");
+      throw new IllegalStateException("The entity '" + entity + "' already exists.");
     }
     String sqlStatement = "INSERT INTO " + prefix
-        + "entitiesPerUser (user_id, name) "
-        + "VALUES (?, ?)";
+        + "entitiesPerUser (user_id, name, flags) "
+        + "VALUES (?, ?, ?)";
     Connection con = null;
     PreparedStatement statement = null;
     try {
@@ -548,6 +649,7 @@ public final class Database {
       statement = con.prepareStatement(sqlStatement);
       statement.setInt(1, userId);
       statement.setString(2, entity);
+      statement.setInt(3, flags);
       if (statement.executeUpdate() == 0) {
         throw new SQLException("Insertion failed.");
       }
@@ -573,11 +675,11 @@ public final class Database {
    *          another database-related error occurred.
    * @throws IllegalArgumentException
    *          The username parameter is null, or the entity parameter is null.
-   * @throws Exception
+   * @throws IllegalStateException
    *          A user with the specified username does not exist in the auth table,
    *          or the entity with the specified name does not exist.
    */
-  public static void deleteEntity(String username, String entity) throws Exception {
+  public static void deleteEntity(String username, String entity) throws SQLException {
     if (username == null) {
       throw new IllegalArgumentException("username");
     }
@@ -612,6 +714,78 @@ public final class Database {
   }
   
   /**
+   * Edits the entity of the user in the auth table with the specified username.
+   * 
+   * @param username
+   *  The username of the user whose entity to edit.
+   * @param entity
+   *  The name of the entity to edit.
+   * @param newName
+   *  The new name of the entity, or null to keep the current name.
+   * @param flags
+   *  The new flags to set on the entity, or null to keep the existing flags.
+   * @throws SQLException
+   *  The connection to the database could not be established, or
+   *  another database-related error occurred.
+   * @throws IllegalArgumentException
+   *  The usename parameter is null, or the entity parameter is null.
+   * @throws IllegalStateException
+   *  A user with the specified username does not exist in the auth table.
+   */
+  public static void updateEntity(String username, String entity, String newName,
+    Integer flags) throws SQLException {
+    if (username == null) {
+      throw new IllegalArgumentException("username");
+    }
+    if (entity == null) {
+      throw new IllegalArgumentException("entity");
+    }
+    int userId = getUserId(username);
+    int stack = 2;
+    StringBuilder b = new StringBuilder("UPDATE " + prefix + "entitiesPerUser SET ");
+    if (newName != null) {
+      b.append("name = ?");
+      stack++;
+    }
+    if (flags != null) {
+      if (stack > 1) {
+        b.append(", ");
+      }
+      b.append("flags = ?");
+      stack++;
+    }
+    b.append(" WHERE user_id = ? AND name = ?");
+    Connection con = null;
+    PreparedStatement statement = null;
+    ResultSet resultSet = null;
+    try {
+      con = Database.getConnection();
+      statement = con.prepareStatement(b.toString());
+      statement.setString(stack--, entity);
+      statement.setInt(stack--, userId);
+      if (flags != null) {
+        statement.setInt(stack--, flags);
+      }
+      if (newName != null) {
+        statement.setString(stack--, newName);
+      }
+      if (statement.executeUpdate() == 0) {
+        throw new SQLException("Update failed.");
+      }
+    } finally {
+      if (resultSet != null) {
+        resultSet.close();
+      }
+      if (statement != null) {
+        statement.close();
+      }
+      if (con != null) {
+        con.close();
+      }
+    }
+  }
+  
+  /**
    * Determines whether the specified entity exists in the auth table.
    * 
    * @param username
@@ -622,12 +796,12 @@ public final class Database {
    * @throws SQLException
    *          The connection to the database could not be established, or
    *          another database-related error occurred.
-   * @throws Exception
+   * @throws IllegalStateException
    *          The user with the specified name does not exist in the auth table.
    * @throws IllegalArgumentException
    *          The username parameter is null, or the entity parameter is null.
    */
-  public static boolean entityExists(String username, String entity) throws SQLException, Exception {
+  public static boolean entityExists(String username, String entity) throws SQLException {
     return entityExists(getUserId(username), entity);
   }
   
@@ -683,34 +857,153 @@ public final class Database {
    *  The name of the user whose entities to retrieve.
    * @return
    *  A list of the user's entities.
+   * @throws SQLException
+   *  The connection to the database could not be established, or
+   *  another database-related error occurred.
    * @throws IllegalArgumentException
    *  The username parameter is null.
-   * @throws Exception
+   * @throws IllegalStateException
    *  A user with the specified name does not exist in the auth table.
    */
-  public static List<String> listEntities(String username) throws Exception {
+  public static List<Entity> listEntities(String username) throws SQLException {
     if (username == null) {
       throw new IllegalArgumentException("username");
     }
     int userId = getUserId(username);
-    String sqlStatement = "SELECT name from " + prefix
+    String sqlStatement = "SELECT * from " + prefix
         + "entitiesPerUser WHERE user_id = ?";
     Connection con = null;
     PreparedStatement statement = null;
-    ResultSet resultSet = null;
+    ResultSet rs = null;
     try {
       con = Database.getConnection();
       statement = con.prepareStatement(sqlStatement);
       statement.setInt(1, userId);
-      resultSet = statement.executeQuery();
-      List<String> names = new LinkedList<String>();
-      while (resultSet.next()) {
-        names.add(resultSet.getString("name"));
+      rs = statement.executeQuery();
+      List<Entity> ents = new LinkedList<Entity>();
+      while (rs.next()) {
+        Entity e = new Entity(rs.getInt("entity_id"), rs.getInt("user_id"),
+                              rs.getString("name"), rs.getTimestamp("last_login"),
+                              rs.getInt("flags"));
+        ents.add(e);
       }
-      return names;
+      return ents;
     } finally {
-      if (resultSet != null) {
-        resultSet.close();
+      if (rs != null) {
+        rs.close();
+      }
+      if (statement != null) {
+        statement.close();
+      }
+      if (con != null) {
+        con.close();
+      }
+    }
+  }
+  
+  /**
+   * Retrieves the data of the entity of the user with the the specified username.
+   * 
+   * @param username
+   *    The name of the user whose entity's data to retrieve.
+   * @param entity
+   *    The name of the entity whose data to retrieve.
+   * @return
+   *    An initialized instance of the Entity class containing the entity's
+   *    data, or null if no such entity exists.
+   * @throws SQLException
+   *  The connection to the database could not be established, or
+   *  another database-related error occurred.
+   * @throws IllegalArgumentException
+   *    The username parameter is null, or the entity parameter is null.
+   * @throws IllegalStateException
+   *  A user with the specified name does not exist in the auth table.
+   */
+  public static Entity getEntity(String username, String entity) throws SQLException {
+    if (username == null) {
+      throw new IllegalArgumentException("username");
+    }
+    if (entity == null) {
+      throw new IllegalArgumentException("entity");
+    }
+    int userId = getUserId(username);
+    String sqlStatement = "SELECT * from " + prefix
+        + "entitiesPerUser WHERE user_id = ? AND name = ?";
+    Connection con = null;
+    PreparedStatement statement = null;
+    ResultSet rs = null;
+    try {
+      con = Database.getConnection();
+      statement = con.prepareStatement(sqlStatement);
+      statement.setInt(1, userId);
+      statement.setString(2, entity);
+      statement.execute();
+      rs = statement.getResultSet();
+      if (!rs.next()) {
+        return null;
+      }
+      return new Entity(rs.getInt("entity_id"), rs.getInt("user_id"),
+                        rs.getString("name"), rs.getTimestamp("last_login"),
+                        rs.getInt("flags"));
+    } finally {
+      if (rs != null) {
+        rs.close();
+      }
+      if (statement != null) {
+        statement.close();
+      }
+      if (con != null) {
+        con.close();
+      }
+    }
+  }
+  
+  /**
+   * Retrieves the attributes of the entity of the user with the the
+   * specified username.
+   * 
+   * @param username
+   *  The name of the user whose entity's data to retrieve.
+   * @param entity
+   *  The name of the entity whose data to retrieve.
+   * @return
+   *  A map of key/value pairs containing the entity's attributes.
+   * @throws SQLException
+   *  The connection to the database could not be established, or
+   *  another database-related error occurred.
+   * @throws IllegalArgumentException
+   *    The username parameter is null, or the entity parameter is null.
+   * @throws IllegalStateException
+   *  A user with the specified name does not exist in the auth table.
+   */
+  public static Map<String, String> getAttributes(String username, String entity)
+      throws SQLException {
+    if (username == null) {
+      throw new IllegalArgumentException("username");
+    }
+    if (entity == null) {
+      throw new IllegalArgumentException("entity");
+    }
+    Entity ent = getEntity(username, entity);
+    String sqlStatement = "SELECT * from " + prefix
+        + "attributesPerEntity WHERE entity_id = ?";
+    Connection con = null;
+    PreparedStatement statement = null;
+    ResultSet rs = null;
+    Map<String, String> attr = new HashMap<String, String>();
+    try {
+      con = Database.getConnection();
+      statement = con.prepareStatement(sqlStatement);
+      statement.setInt(1, ent.getId());
+      statement.execute();
+      rs = statement.getResultSet();
+      while (rs.next()) {
+        attr.put(rs.getString("name"), rs.getString("value"));
+      }
+      return attr;
+    } finally {
+      if (rs != null) {
+        rs.close();
       }
       if (statement != null) {
         statement.close();
@@ -728,12 +1021,15 @@ public final class Database {
    *  The name of the user whose id to lookup.
    * @return
    *  The user-id of the user with the specified username.
+   * @throws SQLException
+   *  The connection to the database could not be established, or
+   *  another database-related error occurred.
    * @throws IllegalArgumentException
    *  The username parameter is null.
-   * @throws Exception
+   * @throws IllegalStateException
    *  A user with the specified username does not exist in the auth table.
    */
-  private static int getUserId(String username) throws Exception {
+  private static int getUserId(String username) throws SQLException {
     if (username == null) {
       throw new IllegalArgumentException("username");
     }
@@ -748,7 +1044,7 @@ public final class Database {
       statement.execute();
       resultSet = statement.getResultSet();
       if (!resultSet.next()) {
-        throw new Exception("A user with the name of '" + username
+        throw new IllegalStateException("A user with the name of '" + username
                             + "' does not exist in the auth table.");
       }
       return resultSet.getInt("user_id");

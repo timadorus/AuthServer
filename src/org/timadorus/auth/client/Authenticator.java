@@ -3,14 +3,18 @@ package org.timadorus.auth.client;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -19,6 +23,9 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.commons.codec.binary.Base64;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * Implements a class which provides an easy-to-use API for authenticating
@@ -255,14 +262,22 @@ public class Authenticator {
    */
   public List<String> listEntities() throws IOException {
     List<String> list = new LinkedList<String>();
-    String ret = makeRequest("/listEntities");
+    String ret = makeRequest("/users/" + username);
     if (ret == null) {
       return list;
     }
-    byte[] data = Base64.decodeBase64(ret);
-    ret = new String(data);
-    for (String s : ret.split(":")) {
-      list.add(s);
+    Gson gson = new Gson();
+    Type stringStringMap = new TypeToken<Map<String, Object>>() { }
+      .getType();
+    Map<String, Object> map = gson.fromJson(ret, stringStringMap);
+    if (map.containsKey("error")) {
+      throw new AuthException("The server returned an error: "
+                              + map.get("text"));
+    }
+    @SuppressWarnings("unchecked")
+    ArrayList<String> ents = (ArrayList<String>) map.get("entities");
+    for (String e : ents) {
+      list.add(e);
     }
     return list;
   }
@@ -288,7 +303,15 @@ public class Authenticator {
     if (entity == null) {
       throw new IllegalArgumentException("entity");
     }
-    return makeRequest("/getAuthToken/" + entity);
-//          + Base64.encodeBase64String(entity.getBytes()));
+    String ret = makeRequest("/users/" + username + "/" + entity);
+    Gson gson = new Gson();
+    Type stringStringMap = new TypeToken<Map<String, Object>>() { }
+      .getType();
+    Map<String, Object> map = gson.fromJson(ret, stringStringMap);
+    if (map.containsKey("error")) {
+      throw new AuthException("The server returned an error: "
+                              + map.get("text"));
+    }
+    return (String) map.get("authToken");
   }
 }

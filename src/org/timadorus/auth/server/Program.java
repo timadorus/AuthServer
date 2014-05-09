@@ -105,7 +105,7 @@ public final class Program {
       System.out.println("Attempting to create database tables...");
       Database.createTables();
       // Create the default administrator account.
-      Database.createUser("admin", "password", true);
+      Database.createUser("admin", "password", true, 0);
       System.out.println("Created database tables. You should now change the "
           + "password 'password' of the default administrator account "
           + "'account'.");

@@ -13,7 +13,7 @@
   <property name="example.dir" value="${release.dir}/example" />
   <property name="ivy.resolve" value="${basedir}/resources/ivy.xml" />
   <property name="ivy.settings" value="${basedir}/resources/ivysettings.xml" />
-  <property name="pub.version" value="0.1" />
+  <property name="pub.version" value="2.0" />
   <property name="pub.status" value="integration" />
   <property name="pub.release.resolver" value="timadorus-release" />
   
@@ -102,7 +102,7 @@
   <target name="jar-client-lib" depends="tests">
     <jar destfile="${release.dir}/auth-client-lib.jar" basedir="${build.dir}">
       <!-- client-lib uses the Base64-decoder of apach commons codec -->
-      <zipgroupfileset dir="${lib.dir}/default" includes="commons-codec-*.jar" />
+      <zipgroupfileset dir="${lib.dir}/default" includes="commons-codec-*.jar,gson-2.2.4.jar" />
       <include name="org/timadorus/auth/client/*.class" />
       <include name="org/timadorus/auth/util/*.class" />
     </jar>
@@ -113,7 +113,7 @@
        ================================= -->
   <target name="jar-example-client" depends="tests">
     <jar destfile="${example.dir}/example-client.jar" basedir="${build.dir}">
-      <zipgroupfileset dir="${lib.dir}/default" includes="commons-codec-*.jar" />
+      <zipgroupfileset dir="${lib.dir}/default" includes="commons-codec-*.jar,gson-2.2.4.jar" />
       <include name="org/timadorus/auth/client/*.class" />
       <include name="org/timadorus/auth/util/*.class" />
       <include name="org/timadorus/auth/example/client/*.class" />
