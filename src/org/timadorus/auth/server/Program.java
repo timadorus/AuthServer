@@ -2,8 +2,11 @@ package org.timadorus.auth.server;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Properties;
+import java.net.URL;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 import org.timadorus.auth.util.Config;
 
@@ -13,6 +16,11 @@ import org.timadorus.auth.util.Config;
  * @author Torben Könke
  */
 public final class Program {
+  /**
+   * Logging facility.
+   */
+  private static final Logger LOG = Logger.getLogger(Program.class.getName());
+
   /**
    * The default port at which the server runs.
    */
@@ -31,6 +39,30 @@ public final class Program {
   }
   
   /**
+   * Retrieves the version string from the jar's manifest file.
+   * 
+   * @return
+   *  The version string (specification-version) of the jar's manifest or
+   *  "n/a" if the version string could not be retrieved.
+   */
+  private static String getVersionString() {
+    try {
+      String className = Program.class.getSimpleName() + ".class";
+      String classPath = Program.class.getResource(className).toString();
+      if (!classPath.startsWith("jar")) {
+        return "n/a";
+      }
+      String manifestPath = classPath.substring(0, classPath.lastIndexOf("!") + 1)
+          + "/META-INF/MANIFEST.MF";
+      Manifest manifest = new Manifest(new URL(manifestPath).openStream());
+      Attributes attr = manifest.getMainAttributes();
+      return attr.getValue("Specification-Version");    
+    } catch (Exception e) {
+      return "n/a";
+    }
+  }
+  
+  /**
    * The entry-point of the application.
    * 
    * @param args
@@ -40,62 +72,29 @@ public final class Program {
    */
   public static void main(String[] args) throws Exception {
     String configPath = "./";
-    boolean interactive = false;
     if (args.length > 0) {
       configPath = args[0];
     }
     // Read properties from the configuration file.
-    Properties props = Config.load(configPath + "/" + CONFIG);
-    String loggingFile = props.getProperty("loggingFile");
-    if (loggingFile != null) {
-      loadLoggingProperties(loggingFile);
+    Config config = new Config(configPath + "/" + CONFIG);
+    if (config.hasProperty("loggingFile")) {
+      loadLoggingProperties(config.getString("loggingFile"));
     }
-    String port = props.getProperty("listenPort");
-    String addr = props.getProperty("networkInterface");
-    int listenPort = DEFAULT_SERVICE_PORT;
-    if (port != null) {
-      listenPort = Integer.parseInt(port);
-    }
-    InetAddress inetAddr = null;
-    if (addr != null) {
-      inetAddr = InetAddress.getByName(addr);
-    }
-    String interactiveMode = props.getProperty("interactiveMode");
-    if (interactiveMode != null) {
-      if (!interactiveMode.equals("false")) {
-        interactive = true;
-      }
-    }
-    // Make sure a key-store file and password have been specified.
-    String keyStoreFile = props.getProperty("keyStoreFile");
-    String keyStorePass = props.getProperty("keyStorePassword");
-    if (keyStoreFile == null || keyStorePass == null) {
-      throw new Exception("The keyStoreFile and keyStorePass values "
-          + "must be set in the '" + CONFIG + "' file.");
-    }
-    String trustStoreFile = props.getProperty("trustStoreFile");
-    String sharedSecretKey = props.getProperty("sharedSecretKey");
-    if (sharedSecretKey == null) {
-      throw new Exception("The sharedSecretKey value must be set in the '"
-                          + CONFIG + "' file.");
-    }
-    String driverClassName = props.getProperty("dbDriverClassName");
-    String connectionString = props.getProperty("dbConnectionString");
-    String dbTablePrefix = props.getProperty("dbTablePrefix");
-    if (driverClassName == null) {
-      throw new Exception("The dbDriverClassName property must be set "
-          + "in the '" + CONFIG + "' file.");
-    }
-    if (connectionString == null) {
-      throw new Exception("The dbConnectionString property must be set "
-          + "in the '" + CONFIG + "' file.");
-    }
+    int listenPort = config.hasProperty("listenPort")
+        ? config.getInt("listenPort") : DEFAULT_SERVICE_PORT;
+    InetAddress inetAddr = config.hasProperty("networkInterface")
+        ? InetAddress.getByName(config.getString("networkInterface")) : null;
+    boolean interactive = config.getBoolean("interactiveMode");
+        
     // Init the database class.
-    Database.init(driverClassName, connectionString, dbTablePrefix);
+    Database.init(config.getString("dbDriverClassName"),
+                  config.getString("dbConnectionString"),
+                  config.hasProperty("dbTablePrefix")
+                  ? config.getString("dbTablePrefix") : null);
     // Test the database settings before starting the actual server.
     if (!Database.testConnection()) {
       throw new Exception("The connection to the database could not be "
-        + "established. Please verify the 'dbDriverClassName' and"
+        + "established. Please verify the 'dbDriverClassName' and "
         + "'dbConnectionString' settings in the '" + CONFIG
         + "' file are correct.");
     }
@@ -111,13 +110,22 @@ public final class Program {
           + "'account'.");
     }
     // Create and start a new auth-server instance.
-    AuthServer server = new AuthServer(listenPort, keyStoreFile, keyStorePass,
-        trustStoreFile, sharedSecretKey, inetAddr);
+    AuthServer server = new AuthServer(listenPort,
+     config.getString("keyStoreFile"),
+     config.getString("keyStorePassword"),
+     config.hasProperty("trustStoreFile") ? config.getString("trustStoreFile") : null,
+     config.getString("sharedSecretKey"),
+     inetAddr,
+     config.getString("gameServers"),
+     config.getBoolean("sessionEncryption"));
+    
     server.start();
-    String m = "Timadorus auth server started. Accepting connections on "
-        + (addr != null ? addr : "all interfaces") + " on port "
+    String m = "Timadorus auth server (Version " + getVersionString()
+        + ") started. Accepting connections on "
+        + (inetAddr != null ? inetAddr : "all interfaces") + " on port "
         + listenPort + ".";
     System.out.println(m);
+    LOG.info(m);
     // Start a simple command-line interpreter.
     if (interactive) {
       System.out.println("Type help for a list of available commands.");

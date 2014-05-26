@@ -1,8 +1,13 @@
 package org.timadorus.auth.example.gameserver;
 
 import java.io.DataInputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Enumeration;
+
 import org.apache.commons.codec.binary.Base64;
 import org.timadorus.auth.util.Crypto;
 
@@ -82,23 +87,65 @@ public final class Program {
       data = Crypto.aesDecrypt(data, key);
       String unencrypted = new String(data, "UTF-8");
       System.out.println("Unencrypted auth-token: " + unencrypted);
-      // 3. Auth-token has the form User:Entity:Timestamp.
+      // 3. Auth-token has the form User:Entity:Timestamp:Hostname.
       String[] parts = unencrypted.split(":");
-      if (parts.length != 3) {
+      if (parts.length < 4) {
         System.out.println("Invalid auth-token!");
         return;
       }
-      // 4. Assert the timestamp is valid.
+      // 3. Assert the auth-token has actually been generated for us.
+      System.out.println("Verifying hostname...");
+      String hostname = parts[3];
+      if (!isValidHostname(hostname)) {
+        System.out.println("Invalid hostname.");
+        return;
+      }
+      System.out.println("Verified hostname '" + hostname + "'");
+      // 4. See if the ticket contains a session-key. If so, the session
+      //    between client and gameserver will be AES encrypted.
+      if (parts.length > 4) {
+        String sessionKey = parts[4];
+        System.out.println("Session-Key for AES session-encryption: "
+                           + sessionKey);
+      }
+      // 5. Finally, assert the timestamp is valid.
       System.out.println("Verifying timestamp...");
       long timestamp = Long.parseLong(parts[2]);
       long current = getUnixTime();
       long dt = current - timestamp;
-      // FIXME: Find a good upper threshold.
+      // FIXME: Find a good upper threshold for how long a token is valid.
       if (dt < 0 || dt > 100) {
         System.out.println("Timestamp is too old or invalid (" + dt + ")");
       } else {
         System.out.println("Auth-token verified!");
       }
+    }
+    
+    /**
+     * Iterates over all IP addresses of all network interfaces of the machine
+     * to determine whether the specified hostname actually belongs to this
+     * machine.
+     * 
+     * @param hostname
+     *  The hostname (either an actual name or an IP address) to verify.
+     * @return
+     *  true if the specified hostname belongs to the machine; Otherwise false.
+     * @throws IOException
+     *  An unexpected error occurred.
+     */
+    private static boolean isValidHostname(String hostname) throws IOException {
+      InetAddress addr = InetAddress.getByName(hostname);
+      Enumeration<NetworkInterface> ifs = NetworkInterface.getNetworkInterfaces();
+      while (ifs.hasMoreElements()) {
+        Enumeration<InetAddress> addrs = ifs.nextElement().getInetAddresses();
+        while (addrs.hasMoreElements()) {
+          InetAddress ia = addrs.nextElement();
+          if (ia.equals(addr)) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
     
     /**

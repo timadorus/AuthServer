@@ -4,7 +4,7 @@
 	<property name="upload.repo.url" value="http://developer.timadorus.org/artifactory" />
 	
 	<!-- Benutzer und Passwort für Upload setzen -->
-	<credentials host="developer.timadorus.org" realm="Artifactory Realm" username="upload" passwd="secret"/>
+	<credentials host="developer.timadorus.org" realm="Artifactory Realm" username="hudson-publish" passwd="2cmenot"/>
 
 	<!-- Es wird definiert welches Verfahren zur Auflösung der Abhängigkeiten 
 		verwendet werden soll (Werden später in dieser Datei definiert) -->
@@ -33,7 +33,7 @@
 		
 		<url name="timadorus-release" m2compatible="true">
 			<ivy pattern="${upload.repo.url}/libs-releases-local/[organisation]/[module]/[revision]/ivy.xml" />
-			<artifact pattern="${upload.repo.url}/libs-releases-local/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]" />
+			<artifact pattern="${upload.repo.url}/libs-releases-local/[organisation]/[module]/[artifact]/[revision]/[artifact]-[revision].[ext]" />
 		</url>
 		<url name="timadorus-snapshot" m2compatible="true">
 			<ivy pattern="${upload.repo.url}/libs-snapshots-local/[organisation]/[module]/[revision]/ivy.xml" />

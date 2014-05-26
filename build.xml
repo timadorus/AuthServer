@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Ant build file -->
 <project default="build" name="TimadorusAuthServer" basedir="."
-	xmlns:ivy="antlib:org.apache.ivy.ant">
+    xmlns:ivy="antlib:org.apache.ivy.ant">
   <!-- Set up properties -->
   <property name="build.dir" value="${basedir}/bin" />
   <property name="src.dir" value="${basedir}/src" />
@@ -15,25 +15,60 @@
   <property name="example.dir" value="${release.dir}/example" />
   <property name="ivy.resolve" value="${basedir}/resources/ivy.xml" />
   <property name="ivy.settings" value="${basedir}/resources/ivysettings.xml" />
-  <property name="pub.version" value="2.0" />
+  <property name="pub.version" value="2.4" />
   <property name="pub.status" value="integration" />
   <property name="pub.release.resolver" value="timadorus-release" />
   
   <path id="classpath">
     <fileset dir="${lib.dir}" includes="**/*.jar" />
   </path>
-	
-	<!-- ================================= 
-	       target: resolve
-	       
-	       Resolves the code dependencies using ivy.
-	     ================================= -->
-	<target name="resolve" description="--> Retrieve dependencies with ivy">
-		<ivy:settings file="${ivy.settings}" />
-		<ivy:resolve file="${ivy.resolve}" />
-		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true" />
-	</target>
-  
+
+
+    <!-- ================================= 
+           target: resolve
+           
+           Resolves the code dependencies using ivy.
+         ================================= -->
+  <property name="ivy.install.version" value="2.1.0-rc2" />
+  <condition property="ivy.home" value="${env.IVY_HOME}">
+     <isset property="env.IVY_HOME" />
+  </condition>
+  <property name="ivy.home" value="${basedir}/.ant" />
+  <property name="ivy.jar.dir" value="${ivy.home}/lib" />
+  <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
+
+  <target name="download-ivy" unless="offline">
+
+      <mkdir dir="${ivy.jar.dir}"/>
+      <!-- download Ivy from web site so that it can be used even without any special installation -->
+      <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" 
+           dest="${ivy.jar.file}" usetimestamp="true"/>
+  </target>
+
+  <target name="init-ivy" depends="download-ivy">
+    <!-- try to load ivy here from ivy home, in case the user has not already dropped
+            it into ant's lib dir (note that the latter copy will always take precedence).
+            We will not fail as long as local lib dir exists (it may be empty) and
+            ivy is in at least one of ant's lib dir or the local lib dir. -->
+      <path id="ivy.lib.path">
+          <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
+
+      </path>
+      <taskdef resource="org/apache/ivy/ant/antlib.xml"
+               uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+      </target>
+    
+    <!-- ================================= 
+           target: resolve
+           
+           Resolves the code dependencies using ivy.
+         ================================= -->
+    <target name="resolve" description="--> Retrieve dependencies with ivy" depends="init-ivy">
+        <ivy:settings file="${ivy.settings}" />
+        <ivy:resolve file="${ivy.resolve}" />
+        <ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true" />
+        </target>
+
   <!-- ================================= 
           target: clean
           
@@ -69,28 +104,28 @@
     <copy todir="${release.dir}">
       <fileset dir="${src.dir}/org/timadorus/auth/server">
         <include name="server-config.xml" />
-      	<include name="logging.properties" />
+          <include name="logging.properties" />
       </fileset>
     </copy>
     <mkdir dir="${example.dir}" />
-  	<mkdir dir="${release.dir}/lib" />
-  	<copy todir="${release.dir}/lib">
-  	  <fileset dir="${lib.dir}"/>
-  	</copy>
-  	<mkdir dir="${release.dir}/doc" />
-  	<copy todir="${release.dir}/doc">
-  	  <fileset dir="${doc.dir}"/>
-  	</copy>
-  	<mkdir dir="${release.dir}/etc" />
-  	<copy todir="${release.dir}/etc">
-  		<fileset dir="${etc.dir}" />
-  	</copy>
+    <mkdir dir="${release.dir}/lib" />
+    <copy todir="${release.dir}/lib">
+      <fileset dir="${lib.dir}"/>
+      </copy>
+    <mkdir dir="${release.dir}/doc" />
+    <copy todir="${release.dir}/doc">
+      <fileset dir="${doc.dir}"/>
+    </copy>
+    <mkdir dir="${release.dir}/etc" />
+    <copy todir="${release.dir}/etc">
+      <fileset dir="${etc.dir}" />
+    </copy>
   </target>
 
   <!-- ================================= 
           target: initscript
 
-	  	  Copies the server control script to output folder.
+          Copies the server control script to output folder.
        ================================= -->
   <target name="initscript" description="--> Copying server control scripts to release folder" depends="release">
     <copy todir="${release.dir}">
@@ -109,12 +144,12 @@
   
   <!-- ================================= 
           target: jar-server
-          
+
           Compiles the server code.
        ================================= -->
 
   <target name="jar-server" description="--> Compiling server" depends="tests">
-  	<!-- Create the value to use for the Class-Path entry in the Jar's manifest -->
+      <!-- Create the value to use for the Class-Path entry in the Jar's manifest -->
     <manifestclasspath property="manifest_cp" jarfile="auth-server.jar">
          <classpath refid="classpath" />
      </manifestclasspath>
@@ -122,6 +157,7 @@
       <manifest>
         <attribute name="Main-Class" value="org.timadorus.auth.server.Program" />
         <attribute name="Class-Path" value="${manifest_cp}"/>
+        <attribute name="Specification-Version" value="${version}" />
       </manifest>
       <include name="org/timadorus/auth/server/*.class" />
       <include name="org/timadorus/auth/util/*.class" />
@@ -130,13 +166,14 @@
   
   <!-- ================================= 
           target: jar-client-lib
-          
+
           Compiles the client code.
        ================================= -->
   <target name="jar-client-lib" description="--> Compiling client" depends="tests">
     <jar destfile="${release.dir}/auth-client-lib.jar" basedir="${build.dir}">
       <!-- client-lib uses the Base64-decoder of apach commons codec -->
-      <zipgroupfileset dir="${lib.dir}/default" includes="commons-codec-*.jar,gson-2.2.4.jar" />
+      <!-- This is now resolved by Ivy -->
+<!--      <zipgroupfileset dir="${lib.dir}/default" includes="commons-codec-*.jar,gson-2.2.4.jar" /> -->
       <include name="org/timadorus/auth/client/*.class" />
       <include name="org/timadorus/auth/util/*.class" />
     </jar>
@@ -144,7 +181,7 @@
   
   <!-- ================================= 
           target: jar-example-client
-          
+
           Compiles the example client code.
        ================================= -->
   <target name="jar-example-client" depends="tests">
@@ -161,7 +198,7 @@
   
   <!-- ================================= 
           target: jar-example-gameserver
-          
+
           Compiles the example gameserver code.
        ================================= -->
   <target name="jar-example-gameserver" depends="tests">
@@ -177,7 +214,7 @@
   
   <!-- ================================= 
           target: jar
-          
+
           Compiles the server code and the example applications.
        ================================= -->
   <target name="jar" description="--> Compiling code" depends="release, jar-server, jar-client-lib,
@@ -185,7 +222,7 @@
   
   <!-- ================================= 
           target: tests
-          
+
           Compiles and runs unit tests.
        ================================= -->
   <target name="tests" description="--> Preparing tests" depends="compile">
@@ -205,19 +242,20 @@
   
   <!-- ================================= 
          target: publish-to-repo
-         
+
          Pushes the JAR files to the Timadorus Artifactory Repository.
        ================================= -->
   <target name="publish-to-repo" description="--> Publish to repository" depends="resolve,jar">
-  	<ivy:publish pubrevision="${pub.version}" status="${pub.status}" resolver="${pub.release.resolver}" overwrite="true">
-  		<artifacts pattern="${release.dir}/[artifact].[ext]" />
-  	</ivy:publish>
+    <ivy:publish pubrevision="${version}" status="${pub.status}" resolver="${pub.release.resolver}" 
+                 overwrite="true" update="true">
+        <artifacts pattern="${release.dir}/[artifact].[ext]" />
+    </ivy:publish>
   </target>
 
   <!-- ================================= 
           target: build
-          
+
           Cleans, resolves dependencies, builds and copies the init script to output folder.
        ================================= -->
-  <target name="build" description="--> Starting build" depends="clean,resolve,jar,initscript" />
+  <target name="build" description="--> Starting build" depends="clean,resolve,jar,initscript, publish-to-repo" />
 </project>

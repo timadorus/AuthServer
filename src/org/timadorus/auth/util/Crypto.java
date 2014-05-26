@@ -28,14 +28,17 @@ package org.timadorus.auth.util;
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.math.BigInteger;
+import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import java.math.BigInteger;
 
 /**
  * PBKDF2 salted password hashing.
@@ -371,5 +374,19 @@ public final class Crypto {
     Cipher cipher = Cipher.getInstance(AES_TRANSFORMATION, "SunJCE");
     cipher.init(Cipher.DECRYPT_MODE, skey, new IvParameterSpec(iv));
     return cipher.doFinal(encrypted);
+  }
+  
+  /**
+   * Generates a random secret key.
+   * 
+   * @return A random secret key.
+   * @throws GeneralSecurityException
+   *           The random secret key could not be generated.
+   */
+  public static SecretKey generateRandomKey() throws GeneralSecurityException {
+    KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+    SecureRandom random = new SecureRandom();
+    keyGen.init(AES_KEY_SIZE * 8, random);
+    return keyGen.generateKey();
   }
 }

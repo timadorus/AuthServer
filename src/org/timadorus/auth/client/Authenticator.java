@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -15,6 +16,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -289,7 +292,9 @@ public class Authenticator {
    * @param entity
    *  The entity for which to request an auth-token.
    * @return
-   *  An opaque auth-token for the specified entity.
+   *  An initialized instance of the AuthResponse class containing an opaque
+   *  auth-token for the specified entity as well as the gameserver
+   *  endpoint to connect to.
    * @throws IOException 
    *  The connection to the auth-server could not be established, or another
    *  IO-related error occurred.
@@ -299,7 +304,7 @@ public class Authenticator {
    * @throws IllegalArgumentException
    *  The entity parameter is null.
    */
-  public String getAuthToken(String entity) throws IOException {
+  public AuthResponse getAuthToken(String entity) throws IOException {
     if (entity == null) {
       throw new IllegalArgumentException("entity");
     }
@@ -312,6 +317,28 @@ public class Authenticator {
       throw new AuthException("The server returned an error: "
                               + map.get("text"));
     }
-    return (String) map.get("authToken");
+    if (!map.containsKey("authToken") || !map.containsKey("gameServer")) {
+      throw new AuthException("The server returned an invalid response: "
+                              + ret);
+    }
+    // Parse the endpoint.
+    String gameServer = (String) map.get("gameServer");
+    int i = gameServer.indexOf(':');
+    String h = gameServer.substring(0, i);
+    int p = Integer.parseInt(gameServer.substring(i + 1));
+    InetSocketAddress endpoint = new InetSocketAddress(h, p);
+    // See if the response contains a session-key for session-encryption.
+    try {
+      SecretKey sessionKey = null;
+      if (map.containsKey("sessionKey")) {
+        byte[] keyBytes = Base64.decodeBase64((String) map.get("sessionKey"));
+        sessionKey = new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
+      }
+      return new AuthResponse((String) map.get("authToken"), endpoint,
+                              sessionKey);
+    } catch (Exception e) {
+      throw new AuthException("The server returned an invalid response: "
+                              + ret, e);
+    }
   }
 }

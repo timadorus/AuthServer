@@ -53,6 +53,16 @@ public class AuthServer {
   private InetAddress inetAddress;
   
   /**
+   * The comma-separated list of gameserver endpoints.
+   */
+  private String gameServers;
+  
+  /**
+   * Determines whether session-encryption should be used.
+   */
+  private boolean encryptSession;
+  
+  /**
    * The NIO selector-thread.
    */
   private SelectorThread threadSelector;
@@ -74,12 +84,17 @@ public class AuthServer {
    * @param inetAddress
    *  The address to bind the server to. If this is null, the server will
    *  accept connections on any of its interfaces.
+   * @param gameServers
+   *  The comma-separated list of gameserver endpoints.
+   * @param encryptSession
+   *  true to use session-encryption. Otherwise false.
    * @throws IllegalArgumentException
    *  The port parameter is not a valid port, or the keyStoreFile parameter
    *  is null, or the sharedSecretKey parameter is null.
    */
   public AuthServer(int port, String keyStoreFile, String keyStorePassword,
-    String trustStoreFile, String sharedSecretKey, InetAddress inetAddress) {
+    String trustStoreFile, String sharedSecretKey, InetAddress inetAddress,
+    String gameServers, boolean encryptSession) {
     if (port < 0 || port > 65535) {
       throw new IllegalArgumentException("Invalid port.");
     }
@@ -89,12 +104,17 @@ public class AuthServer {
     if (sharedSecretKey == null) {
       throw new IllegalArgumentException("sharedSecretKey");
     }
+    if (gameServers == null) {
+      throw new IllegalArgumentException("gameServers");
+    }
     this.port = port;
     this.keyStoreFile = keyStoreFile;
     this.keyStorePassword = keyStorePassword;
     this.trustStoreFile = trustStoreFile;
     this.sharedSecretKey = sharedSecretKey;
     this.inetAddress = inetAddress;
+    this.gameServers = gameServers;
+    this.encryptSession = encryptSession;
   }
 
   /**
@@ -119,6 +139,10 @@ public class AuthServer {
     // Add the shared secret-key as an init parameter so that it can be
     // accessed from the Resource classes, serving the HTTP requests.
     adapter.addInitParameter("sharedSecretKey", sharedSecretKey);
+    adapter.addInitParameter("gameServers", gameServers);
+    if (encryptSession) {
+      adapter.addInitParameter("encryptSession", "true");
+    }
     // Set up request filtering for convenient verification of credentials.
     adapter.addInitParameter(ResourceConfig.PROPERTY_CONTAINER_REQUEST_FILTERS,
                              SecurityFilter.class.getName());

@@ -1,9 +1,13 @@
 package org.timadorus.auth.server;
 
+import java.net.InetSocketAddress;
+import java.text.ParseException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.ws.rs.DELETE;
@@ -65,7 +69,9 @@ public class UsersResource {
    *  An unexpected error occurred.
    */
   private boolean isAdmin() throws Exception {
-    return Database.isAdmin(getUsername());
+// Disabled as per Lutz' request.
+//    return Database.isAdmin(getUsername());
+    return false;
   }
   
   /**
@@ -258,10 +264,22 @@ public class UsersResource {
     if (ent == null) {
       throw new IllegalStateException("The entity '" + entity + "' does not exist.");
     }
+    // Select one of the gameserver to redirect the client to.
+    InetSocketAddress endpoint = selectGameServer(user, entity);
     // Construct and return a proper JSON object.
     Map<String, Object> props = new HashMap<String, Object>();
     props.put("name", ent.getName());
-    props.put("authToken", generateAuthToken(user, entity));
+    String sessionKey = null;
+    if (config.getInitParameter("encryptSession") != null) {
+      // Generate a random AES session-key.
+      sessionKey =
+          Base64.encodeBase64String(Crypto.generateRandomKey().getEncoded());
+      props.put("sessionKey", sessionKey);
+    }
+    props.put("authToken", generateAuthToken(user, entity,
+                                             endpoint.getHostName(),
+                                             sessionKey));
+    props.put("gameServer", endpoint.getHostName() + ":" + endpoint.getPort());
     // Make some fields visible only if the requestor is privileged.
     if (isAdmin()) {
       props.put("id", ent.getId());
@@ -433,18 +451,27 @@ public class UsersResource {
    *  The name of the user the entity belongs to.
    * @param entity
    *  The entity to generate an auth-token for.
+   * @param hostname
+   *  The name of the host for which the auth-token is valid.
+   * @param sessionKey
+   *  The BASE64-encoded session-key if session-encryption is used. If
+   *  session-encryption is not used, this parameter may be null.
    * @return
    *  The generated auth-token for the entity.
    * @throws Exception
    *  An unexpected error occured.
    */
-  private String generateAuthToken(String username, String entity) throws Exception {
+  private String generateAuthToken(String username, String entity,
+    String hostname, String sessionKey) throws Exception {
     // Get the shared secret key.
     String sharedSecretKey = config.getInitParameter("sharedSecretKey");
     // Generate and return an encrypted auth-token. The auth-token has the
     // form 'User:Entity:Timestamp'.
     String authToken = username + ":" + entity + ":"
-        + Long.toString(getUnixTime());
+        + Long.toString(getUnixTime()) + ":" + hostname;
+    if (sessionKey != null) {
+      authToken = authToken + ":" + sessionKey;
+    }
     byte[] encrypted = Crypto.aesEncrypt(authToken.getBytes("UTF-8"),
                       sharedSecretKey);
     return Base64.encodeBase64String(encrypted);
@@ -459,5 +486,72 @@ public class UsersResource {
    */
   private long getUnixTime() {
     return System.currentTimeMillis() / 1000L;
+  }
+  
+  /**
+   * Selects the most-appropriate gameserver for the requesting client from
+   * the list of gameserver endpoints.
+   *  
+   * @param username
+   *  The name of the user the entity belongs to.
+   * @param entity
+   *  The entity the user wants to login with.
+   * @return
+   *  The gameserver endpoint to redirect the requesting client to.
+   */
+  private InetSocketAddress selectGameServer(String username, String entity) {
+    // HACK: I couldn't for the life of me figure out how to pass an object
+    // reference from the servlet adapter to the POJO, so as a workaround,
+    // we pass the comma-separated list of gameservers as an init parameter
+    // and put the parsed collection into the servlet context once it's
+    // requested for the first time.
+    Object o = config.getServletContext().getAttribute("gameServers");
+    if (o == null) {
+      try {
+        o = parseGameServers(config.getInitParameter("gameServers"));
+        config.getServletContext().setAttribute("gameServers", o);
+      } catch (ParseException e) {
+        throw new RuntimeException("Could not select gameserver.", e);
+      }
+    }
+    @SuppressWarnings("unchecked")
+    Set<InetSocketAddress> endpoints = (Set<InetSocketAddress>) o;
+    // TODO: At some point, once the gameserver has been implemented up to the
+    //  stage where it has some concept of a 'world map', the most appropriate
+    //  gameserver instance for the requesting client should be selected here,
+    //  possibly depending on the part of the world the client's avatar
+    //  currently resides in and/or a server's current workload.
+    
+    // For the time being, just return the first gameserver in the list.
+    return endpoints.iterator().next();
+  }
+  
+  /**
+   * Parses the list of gameservers specified in the server's configuration
+   * file.
+   * 
+   * @param list
+   *  The comma-separated list of gameserver endpoints to parse.
+   * @return
+   *  A set of gameserver endpoints.
+   * @throws ParseException
+   *  An error occurred while parsing the list.
+   */
+  private static Set<InetSocketAddress> parseGameServers(String list)
+      throws ParseException {
+    try {
+      Set<InetSocketAddress> eps = new HashSet<InetSocketAddress>();
+      for (String s : list.split(",")) {
+        String t = s.trim();
+        int i = t.indexOf(':');
+        String hostname = t.substring(0, i);
+        int port = Integer.parseInt(t.substring(i + 1));
+        eps.add(new InetSocketAddress(hostname, port));
+      }
+      return eps;
+    } catch (Exception e) {
+      throw new ParseException("The list of gameserver endpoints contains "
+                               + "invalid entries.", 0);
+    }
   }
 }

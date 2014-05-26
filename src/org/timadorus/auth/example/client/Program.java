@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
 
+import org.timadorus.auth.client.AuthResponse;
 import org.timadorus.auth.client.Authenticator;
 
 /**
@@ -18,11 +19,6 @@ public final class Program {
    * The default service port of the auth-server to connect to.
    */
   private static final int DEFAULT_AUTH_SERVICE_PORT = 50001;
-
-  /**
-   * The port at which the game-server is listening for connections.
-   */
-  private static final int GAME_SERVER_PORT = 60004;
 
   /**
    * The username of the client.
@@ -77,30 +73,31 @@ public final class Program {
     }
     String entity = ents.get(0);
     System.out.println("Requesting auth-token for " + entity);
-    String authToken = auth.getAuthToken(entity);
+    AuthResponse authResponse = auth.getAuthToken(entity);
     // The auth-server returns an opaque auth-token which we hand to the
     // game server as our proof of authentication.
-    System.out.println("Received auth-token: " + authToken);
-    System.out.println("Connecting to gameserver...");
-    connectToGameServer(authToken);
+    System.out.println("Received auth-token: " + authResponse.authToken);
+    System.out.println("Connecting to gameserver endpoint '"
+                       + authResponse.gameServer + "'...");
+    connectToGameServer(authResponse);
   }
   
   /**
    * Connets to the game-server and performs a login.
    * 
-   * @param authToken
-   *          The auth-token for the game-server received from the
-   *          authentication server.
+   * @param authResponse
+   *          The auth-response received from the authentication server.
    * @throws Exception
    *           The connection to the game-server could not be established or
    *           another socket-related error occurred.
    */
-  private static void connectToGameServer(String authToken) throws Exception {
-    Socket socket = new Socket("localhost", GAME_SERVER_PORT);
+  private static void connectToGameServer(AuthResponse authResponse) throws Exception {
+    Socket socket = new Socket(authResponse.gameServer.getHostName(),
+                               authResponse.gameServer.getPort());
     DataOutputStream os = null;
     try {
       os = new DataOutputStream(socket.getOutputStream());
-      os.writeUTF(authToken);
+      os.writeUTF(authResponse.authToken);
     } finally {
       if (os != null) {
         os.close();

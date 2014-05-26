@@ -154,8 +154,10 @@ public final class Database {
     try {
       statement = con.createStatement();
       statement.execute(usersTable);
+      statement.close();
       statement = con.createStatement();
       statement.execute(entitiesTable);
+      statement.close();
       statement = con.createStatement();
       statement.execute(attributesTable);
       return true;

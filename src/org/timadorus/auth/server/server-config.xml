@@ -72,4 +72,23 @@
   <entry key="interactiveMode">
     false
   </entry>
+  <!-- A comma-separated list of gameserver endpoints. Upon ticket request, the
+    auth-server chooses the most appropriate gameserver endpoint for the
+    requesting client from this list and returns it's address to the client. -->
+  <entry key="gameServers">
+  <!--  sample entries:
+    localhost:60004,
+    192.168.0.1:12345,
+    game.timadorus.org:12345
+   -->
+   localhost:60004
+  </entry>
+  <!-- Determines whether session-data between client and gameserver should be
+    encrypted. If this is enabled, client and gameserver are issued a
+    session-key for symmetric data en- and decryption much like kerberos. If
+    this is false, the data between client and gameserver will not be
+    encrypted. -->
+  <entry key="sessionEncryption">
+    true
+  </entry>
 </properties>
