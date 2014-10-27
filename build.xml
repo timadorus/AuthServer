@@ -92,7 +92,7 @@
         <include name="serviceControl.sh" />
       </fileset>
     </copy>
-    <chmod file="${release.dir}/*.sh" perm="a+x" />
+    <chmod dir="${release.dir}" perm="ugo+x" includes="*.sh" />
   </target>
   
   <!-- ================================= 
