@@ -8,7 +8,7 @@
   <property name="test-src.dir" value="${basedir}/test-src" />
   <property name="lib.dir" value="${basedir}/lib" />
   <property name="doc.dir" value="${basedir}/doc" />
-  <property name="runscripts.dir" value="${basedir}/runscripts" />
+  <property name="initscript.dir" value="${basedir}/etc/init.d" />
   <property name="etc.dir" value="${basedir}/etc" />
   <property name="release.dir" value="${basedir}/release" />
   <property name="example.dir" value="${release.dir}/example" />
@@ -79,20 +79,16 @@
   </target>
 
   <!-- ================================= 
-          target: runscripts
+          target: initscript
 
-	  copies scripts to run the jar files
+	  copies script to run the jar file
        ================================= -->
-  <target name="runscripts" depends="release">
+  <target name="initscript" depends="release">
     <copy todir="${release.dir}">
-      <fileset dir="${runscripts.dir}">
-        <include name="startAuthServer.sh" />
-        <include name="stopAuthServer.sh" />
-        <include name="restartAuthServer.sh" />
-        <include name="serviceControl.sh" />
+      <fileset dir="${initscript.dir}">
+        <include name="authserver.sh" />
       </fileset>
     </copy>
-    <chmod dir="${release.dir}" perm="ugo+x" includes="*.sh" />
   </target>
   
   <!-- ================================= 
@@ -193,5 +189,5 @@
   <!-- ================================= 
           target: build
        ================================= -->
-  <target name="build" depends="clean,resolve,jar,runscripts" />
+  <target name="build" depends="clean,resolve,jar,initscript" />
 </project>

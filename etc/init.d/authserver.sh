@@ -40,4 +40,17 @@ case $1 in
             echo "$SERVICE_NAME is not running ..."
         fi
     ;;
+    force-restart)
+        if [ -f $PID_PATH_NAME ]; then
+            PID=$(cat $PID_PATH_NAME);
+            echo "$SERVICE_NAME stopping ...";
+            kill $PID;
+            echo "$SERVICE_NAME stopped ...";
+            rm $PID_PATH_NAME
+        fi
+        echo "$SERVICE_NAME starting ..."
+        nohup java -jar $PATH_TO_JAR $JAR_PARAMS /tmp 2>> /dev/null >> /dev/null &
+        echo $! > $PID_PATH_NAME
+        echo "$SERVICE_NAME started ..."
+    ;;
 esac
