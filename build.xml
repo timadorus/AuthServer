@@ -8,6 +8,7 @@
   <property name="test-src.dir" value="${basedir}/test-src" />
   <property name="lib.dir" value="${basedir}/lib" />
   <property name="doc.dir" value="${basedir}/doc" />
+  <property name="runscripts.dir" value="${basedir}/runscripts" />
   <property name="etc.dir" value="${basedir}/etc" />
   <property name="release.dir" value="${basedir}/release" />
   <property name="example.dir" value="${release.dir}/example" />
@@ -76,12 +77,29 @@
   		<fileset dir="${etc.dir}" />
   	</copy>
   </target>
+
+  <!-- ================================= 
+          target: runscripts
+
+	  copies scripts to run the jar files
+       ================================= -->
+  <target name="runscripts" depends="release">
+    <copy todir="${release.dir}">
+      <fileset dir="${runscripts.dir}">
+        <include name="startAuthServer.sh" />
+        <include name="stopAuthServer.sh" />
+        <include name="restartAuthServer.sh" />
+        <include name="serviceControl.sh" />
+      </fileset>
+    </copy>
+    <chmod file="${release.dir}/*.sh" perm="a+x" />
+  </target>
   
   <!-- ================================= 
           target: jar-server
        ================================= -->
 
-  <target name="jar-server" depends="tests">
+  <target name="jar-server" description="JAR Server" depends="tests">
   	<!-- Create the value to use for the Class-Path entry in the Jar's manifest -->
     <manifestclasspath property="manifest_cp" jarfile="auth-server.jar">
          <classpath refid="classpath" />
@@ -172,5 +190,8 @@
   	</ivy:publish>
   </target>
 
-  <target name="build" depends="clean,resolve,jar" />
+  <!-- ================================= 
+          target: build
+       ================================= -->
+  <target name="build" depends="clean,resolve,jar,runscripts" />
 </project>
