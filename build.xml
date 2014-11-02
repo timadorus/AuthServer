@@ -24,8 +24,10 @@
 	
 	<!-- ================================= 
 	       target: resolve
+	       
+	       Resolves the code dependencies using ivy.
 	     ================================= -->
-	<target name="resolve" description="--> retrieve dependencies with ivy">
+	<target name="resolve" description="--> Retrieve dependencies with ivy">
 		<ivy:settings file="${ivy.settings}" />
 		<ivy:resolve file="${ivy.resolve}" />
 		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true" />
@@ -33,16 +35,20 @@
   
   <!-- ================================= 
           target: clean
+          
+          Cleans the build and release directories.
        ================================= -->
-  <target name="clean">
+  <target name="clean" description="--> Delete build and release directories">
     <delete dir="${build.dir}" />
     <delete dir="${release.dir}" />
   </target>
   
   <!-- ================================= 
           target: compile
+          
+          Compiles the code.
        ================================= -->
-  <target name="compile">
+  <target name="compile" description="--> Compiling the code">
     <mkdir dir="${build.dir}" />
     <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="classpath" includeantruntime="false">
       <compilerarg line="-encoding utf-8"/>
@@ -54,8 +60,10 @@
   
   <!-- ================================= 
           target: release
+          
+          Creates realease directory and copies data in to correct folders.
        ================================= -->
-  <target name="release">
+  <target name="release" description="--> Generating release directory">
     <mkdir dir="${release.dir}" />
     <copy todir="${release.dir}">
       <fileset dir="${src.dir}/org/timadorus/auth/server">
@@ -81,9 +89,9 @@
   <!-- ================================= 
           target: initscript
 
-	  copies script to run the jar file
+	  	  Copies the server control script to output folder.
        ================================= -->
-  <target name="initscript" depends="release">
+  <target name="initscript" description="--> Copying server control script to release folder" depends="release">
     <copy todir="${release.dir}">
       <fileset dir="${initscript.dir}">
         <include name="authserver.sh" />
@@ -93,9 +101,11 @@
   
   <!-- ================================= 
           target: jar-server
+          
+          Compiles the server code.
        ================================= -->
 
-  <target name="jar-server" description="JAR Server" depends="tests">
+  <target name="jar-server" description="--> Compiling server" depends="tests">
   	<!-- Create the value to use for the Class-Path entry in the Jar's manifest -->
     <manifestclasspath property="manifest_cp" jarfile="auth-server.jar">
          <classpath refid="classpath" />
@@ -112,8 +122,10 @@
   
   <!-- ================================= 
           target: jar-client-lib
+          
+          Compiles the client code.
        ================================= -->
-  <target name="jar-client-lib" depends="tests">
+  <target name="jar-client-lib" description="--> Compiling client" depends="tests">
     <jar destfile="${release.dir}/auth-client-lib.jar" basedir="${build.dir}">
       <!-- client-lib uses the Base64-decoder of apach commons codec -->
       <zipgroupfileset dir="${lib.dir}/default" includes="commons-codec-*.jar,gson-2.2.4.jar" />
@@ -124,6 +136,8 @@
   
   <!-- ================================= 
           target: jar-example-client
+          
+          Compiles the example client code.
        ================================= -->
   <target name="jar-example-client" depends="tests">
     <jar destfile="${example.dir}/example-client.jar" basedir="${build.dir}">
@@ -139,6 +153,8 @@
   
   <!-- ================================= 
           target: jar-example-gameserver
+          
+          Compiles the example gameserver code.
        ================================= -->
   <target name="jar-example-gameserver" depends="tests">
     <jar destfile="${example.dir}/example-gameserver.jar" basedir="${build.dir}">
@@ -153,14 +169,18 @@
   
   <!-- ================================= 
           target: jar
+          
+          Compiles the server code and the example applications.
        ================================= -->
-  <target name="jar" depends="release, jar-server, jar-client-lib,
+  <target name="jar" description="--> Compiling code" depends="release, jar-server, jar-client-lib,
       jar-example-client, jar-example-gameserver" />
   
   <!-- ================================= 
           target: tests
+          
+          Compiles and runs unit tests.
        ================================= -->
-  <target name="tests" depends="compile">
+  <target name="tests" description="--> Preparing tests" depends="compile">
     <junit fork="yes" printsummary="yes" haltonfailure="yes">
       <classpath>
         <path refid="classpath" />
@@ -180,7 +200,7 @@
          
          Pushes the JAR files to the Timadorus Artifactory Repository.
        ================================= -->
-  <target name="publish-to-repo" depends="resolve,jar">
+  <target name="publish-to-repo" description="--> Publish to repository" depends="resolve,jar">
   	<ivy:publish pubrevision="${pub.version}" status="${pub.status}" resolver="${pub.release.resolver}" overwrite="true">
   		<artifacts pattern="${release.dir}/[artifact].[ext]" />
   	</ivy:publish>
@@ -188,6 +208,8 @@
 
   <!-- ================================= 
           target: build
+          
+          Cleans, resolves dependencies, builds and copies the init script to output folder.
        ================================= -->
-  <target name="build" depends="clean,resolve,jar,initscript" />
+  <target name="build" description="--> Starting build" depends="clean,resolve,jar,initscript" />
 </project>
