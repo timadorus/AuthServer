@@ -1,10 +1,12 @@
 #!/bin/sh
+
 SERVICE_NAME=TimadorusAuthServer
 WORKING_DIR=/usr/share/timadorus-auth-server
 PATH_TO_JAR=/usr/share/timadorus-auth-server/auth-server.jar
 JAR_PARAMS=/usr/share/timadorus-auth-server/
 PID_PATH_NAME=/tmp/TimadorusAuthServer-pid
 LOG_FILE=authserver.log
+
 case $1 in
     start)
         echo "Starting $SERVICE_NAME ..."

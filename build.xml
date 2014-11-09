@@ -9,6 +9,7 @@
   <property name="lib.dir" value="${basedir}/lib" />
   <property name="doc.dir" value="${basedir}/doc" />
   <property name="initscript.dir" value="${basedir}/etc/init.d" />
+  <property name="serverscripts.dir" value="${basedir}/etc/server-scripts" />
   <property name="etc.dir" value="${basedir}/etc" />
   <property name="release.dir" value="${basedir}/release" />
   <property name="example.dir" value="${release.dir}/example" />
@@ -91,10 +92,17 @@
 
 	  	  Copies the server control script to output folder.
        ================================= -->
-  <target name="initscript" description="--> Copying server control script to release folder" depends="release">
+  <target name="initscript" description="--> Copying server control scripts to release folder" depends="release">
     <copy todir="${release.dir}">
       <fileset dir="${initscript.dir}">
         <include name="authserver.sh" />
+      </fileset>
+    </copy>
+    <copy todir="${release.dir}/server-scripts">
+      <fileset dir="${serverscripts.dir}">
+        <include name="startAuthServer.sh" />
+        <include name="stopAuthServer.sh" />
+        <include name="restartAuthServer.sh" />
       </fileset>
     </copy>
   </target>
