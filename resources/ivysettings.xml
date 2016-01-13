@@ -4,7 +4,7 @@
 	<property name="upload.repo.url" value="http://developer.timadorus.org/artifactory" />
 	
 	<!-- Benutzer und Passwort für Upload setzen -->
-	<credentials host="developer.timadorus.org" realm="Artifactory Realm" username="hudson-publish" passwd="2cmenot"/>
+	<credentials host="developer.timadorus.org" realm="Artifactory Realm" username="hudson-publish" passwd="password"/>
 
 	<!-- Es wird definiert welches Verfahren zur Auflösung der Abhängigkeiten 
 		verwendet werden soll (Werden später in dieser Datei definiert) -->

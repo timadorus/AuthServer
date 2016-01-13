@@ -56,18 +56,18 @@
       </path>
       <taskdef resource="org/apache/ivy/ant/antlib.xml"
                uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
-      </target>
+  </target>
     
-    <!-- ================================= 
+  <!-- ================================= 
            target: resolve
            
            Resolves the code dependencies using ivy.
-         ================================= -->
-    <target name="resolve" description="--> Retrieve dependencies with ivy" depends="init-ivy">
+       ================================= -->
+  <target name="resolve" description="--> Retrieve dependencies with ivy" depends="init-ivy">
         <ivy:settings file="${ivy.settings}" />
         <ivy:resolve file="${ivy.resolve}" />
         <ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision](-[classifier]).[ext]" sync="true" />
-        </target>
+  </target>
 
   <!-- ================================= 
           target: clean
@@ -252,10 +252,23 @@
     </ivy:publish>
   </target>
 
-  <!-- ================================= 
-          target: build
+  <target name="prepare-install-archive" description="--> create release archive" depends="resolve,jar">
+      <zip destfile="RC-TimadorusAuthServer-release-${pub.version}.zip" whenempty="fail">
+          <zipfileset dir="release" prefix="TimadorusAuthServer-${pub.version}"/>
+      </zip>
+  </target>
+
+    <!-- ================================= 
+              target: jenkins-run
+              
+              Will build, test everything and create a relase zip-ball 
+         ================================= -->
+  <target name="jenkins-run" depends="clean,resolve,jar,tests,initscript,prepare-install-archive" />
+
+    <!-- ================================= 
+              target: build
 
           Cleans, resolves dependencies, builds and copies the init script to output folder.
        ================================= -->
-  <target name="build" description="--> Starting build" depends="clean,resolve,jar,initscript, publish-to-repo" />
+  <target name="build" description="--> Starting build" depends="clean,resolve,jar,tests,initscript" />
 </project>
