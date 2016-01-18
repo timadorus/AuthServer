@@ -19,12 +19,13 @@
       For embedded Derby:    org.apache.derby.jdbc.EmbeddedDriver
       For traditional Derby: org.apache.derby.jdbc.ClientDriver
    -->
-  <entry key="dbDriverClassName">org.apache.derby.jdbc.ClientDriver</entry>
+  <entry key="dbDriverClassName">org.apache.derby.jdbc.EmbeddedDriver</entry>
   <!-- The connection-string for connecting to the auth database. Note that
      the & character must be encoded as &amp;
   -->
   <entry key="dbConnectionString">
-    jdbc:derby://localhost/timadorus;create=true;user=authserver;password=geheim
+<!--   jdbc:derby://localhost/timadorus;create=true;user=authserver;password=geheim  -->
+     jdbc:derby:/as-data/timadorus_user_db;create=true;
   </entry>
   <!-- The prefix, if any, of the database tables. -->
   <!--<entry key="dbTablePrefix">tm_</entry>-->
@@ -63,7 +64,7 @@
     system property (-Djava.util.logging.config.file) when starting the
     application. -->
   <entry key="loggingFile">
-    ./logging.properties
+    /as-data/logging.properties
   </entry>
   <!-- Determines whether the server should run in interactive mode. In
        interactive mode, a simple command-interpreter is available for
